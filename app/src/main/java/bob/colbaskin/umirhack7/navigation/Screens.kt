@@ -20,7 +20,4 @@ interface Screens {
 
     @Serializable
     data object SignIn: Screens
-
-    @Serializable
-    data object SignUp: Screens
 }
