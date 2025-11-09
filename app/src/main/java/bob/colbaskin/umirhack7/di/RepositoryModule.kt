@@ -1,5 +1,6 @@
 package bob.colbaskin.umirhack7.di
 
+import android.content.Context
 import bob.colbaskin.umirhack7.auth.data.AuthRepositoryImpl
 import bob.colbaskin.umirhack7.auth.data.RefreshTokenRepositoryImpl
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthApiService
@@ -9,10 +10,14 @@ import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenService
 import bob.colbaskin.umirhack7.common.user_prefs.data.UserPreferencesRepositoryImpl
 import bob.colbaskin.umirhack7.common.user_prefs.data.datastore.UserDataStore
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
+import bob.colbaskin.umirhack7.maplibre.data.OfflineMapRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import org.maplibre.android.offline.OfflineManager
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -58,5 +63,17 @@ object RepositoryModule {
         return RefreshTokenRepositoryImpl(
             tokenApi = tokenApi
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideOfflineManager(@ApplicationContext context: Context): OfflineManager {
+        return OfflineManager.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOfflineMapRepository(offlineManager: OfflineManager): OfflineMapRepository {
+        return OfflineMapRepositoryImpl(offlineManager = offlineManager)
     }
 }

@@ -53,6 +53,10 @@ accompanistPager = "0.36.0"
 # Material Icons
 materialIconsCore = "1.7.8"
 
+# MapLibre Compose
+playServicesLocation = "21.3.0"
+maplibre = "0.11.1"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -111,6 +115,11 @@ accompanist-pager-indicators = { module = "com.google.accompanist:accompanist-pa
 
 # Material Icons
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsCore" }
+
+# MapLibre Compose
+maplibre-compose = { module = "org.maplibre.compose:maplibre-compose", version.ref = "maplibre" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+maplibre-composeMaterial3 = { module = "org.maplibre.compose:maplibre-compose-material3", version.ref = "maplibre" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

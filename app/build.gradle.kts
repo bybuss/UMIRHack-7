@@ -133,4 +133,10 @@ dependencies {
 
     // Material Icons
     implementation(libs.androidx.material.icons.extended)
+
+    // MapLibre Compose
+    implementation(libs.maplibre.compose)
+    implementation(libs.maplibre.composeMaterial3)
+    implementation(libs.play.services.location)
+
 }
