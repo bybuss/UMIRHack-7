@@ -5,6 +5,8 @@ import android.util.Log
 import bob.colbaskin.umirhack7.BuildConfig
 import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenRepository
 import bob.colbaskin.umirhack7.di.token.TokenAuthenticator
+import bob.colbaskin.umirhack7.di.token.TokenInterceptor
+import bob.colbaskin.umirhack7.di.token.TokenManager
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -21,6 +23,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import java.util.concurrent.TimeUnit
 import javax.inject.Provider
 
 @Module
@@ -36,11 +39,19 @@ object RemoteModule {
 
     @Provides
     @Singleton
+    fun provideTokenInterceptor(tokenManager: TokenManager): TokenInterceptor {
+        return TokenInterceptor(tokenManager)
+    }
+
+    @Provides
+    @Singleton
     fun provideTokenAuthenticator(
-        refreshTokenRepository: Provider<RefreshTokenRepository>
+        tokenManager: TokenManager,
+        refreshTokenRepository: RefreshTokenRepository
     ): TokenAuthenticator {
         return TokenAuthenticator(
-            refreshTokenRepository = refreshTokenRepository
+            refreshTokenRepository = refreshTokenRepository,
+            tokenManager = tokenManager
         )
     }
 
@@ -48,7 +59,8 @@ object RemoteModule {
     @Singleton
     fun provideOkHttpClient(
         @ApplicationContext context: Context,
-        tokenAuthenticator: TokenAuthenticator
+        tokenInterceptor: TokenInterceptor,
+        tokenAuthenticator: Provider<TokenAuthenticator>
     ): OkHttpClient {
         val cookieJar = PersistentCookieJar(
             SetCookieCache(),
@@ -60,6 +72,7 @@ object RemoteModule {
             .addInterceptor(HttpLoggingInterceptor().apply {
                 setLevel(HttpLoggingInterceptor.Level.BODY)
             })
+            .addInterceptor(tokenInterceptor)
             .addInterceptor { chain ->
                 val request = chain.request()
                 Log.d("Cookies", "Sending cookies: ${request.headers["Cookie"]}")
@@ -68,7 +81,7 @@ object RemoteModule {
                 response
             }
             .authenticator { route, response ->
-                tokenAuthenticator.authenticate(route, response)
+                tokenAuthenticator.get().authenticate(route, response)
             }
             .build()
     }

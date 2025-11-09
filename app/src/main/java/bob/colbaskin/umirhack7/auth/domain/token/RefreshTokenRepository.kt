@@ -4,5 +4,5 @@ import bob.colbaskin.umirhack7.common.ApiResult
 
 interface RefreshTokenRepository {
 
-    suspend fun refresh(): ApiResult<Unit>
+    suspend fun refresh(refreshToken: String): ApiResult<Unit>
 }

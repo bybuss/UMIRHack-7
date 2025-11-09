@@ -9,27 +9,34 @@ import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 import javax.inject.Inject
-import javax.inject.Provider
 
 private const val TAG = "Auth"
 
 class TokenAuthenticator @Inject constructor(
-    private val refreshTokenRepository: Provider<RefreshTokenRepository>,
+    private val refreshTokenRepository: RefreshTokenRepository,
+    private val tokenManager: TokenManager
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
         if (response.code == 401) {
             Log.d(TAG, "Unauthorized. Attempting to refresh token")
 
-            val refreshResult = runBlocking {
-                refreshTokenRepository.get().refresh()
-            }
+            val refreshToken = tokenManager.getRefreshToken()
 
-            if (refreshResult is ApiResult.Success<*>) {
-                Log.d(TAG, "Refresh token updated!")
-                return response.request.newBuilder().build()
-            } else {
-                Log.d(TAG, "Refresh token failed")
+            if (!refreshToken.isNullOrEmpty()) {
+                val refreshResult = runBlocking {
+                    refreshTokenRepository.refresh(refreshToken)
+                }
+
+                if (refreshResult is ApiResult.Success) {
+                    val newAccessToken = tokenManager.getAccessToken()
+
+                    return response.request.newBuilder()
+                        .header("Authorization", "Bearer $newAccessToken")
+                        .build()
+                } else {
+                    Log.d(TAG, "Token refresh failed")
+                }
             }
         }
 

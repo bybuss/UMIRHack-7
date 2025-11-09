@@ -10,10 +10,13 @@ import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenService
 import bob.colbaskin.umirhack7.common.user_prefs.data.UserPreferencesRepositoryImpl
 import bob.colbaskin.umirhack7.common.user_prefs.data.datastore.UserDataStore
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
+import bob.colbaskin.umirhack7.di.token.TokenManager
 import bob.colbaskin.umirhack7.maplibre.data.LocationRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.OfflineMapRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
+import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
+import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -60,10 +63,12 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideRefreshTokenRepository(
-        tokenApi: RefreshTokenService
+        refreshTokenApi: RefreshTokenService,
+        tokenManager: TokenManager
     ): RefreshTokenRepository {
         return RefreshTokenRepositoryImpl(
-            tokenApi = tokenApi
+            refreshTokenApi = refreshTokenApi,
+            tokenManager = tokenManager
         )
     }
 
@@ -83,5 +88,17 @@ object RepositoryModule {
     @Singleton
     fun provideLocationRepository(@ApplicationContext context: Context): LocationRepository {
         return LocationRepositoryImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProfileRepository(
+        tokenManager: TokenManager,
+        userPreferences: UserPreferencesRepository
+    ): ProfileRepository {
+        return ProfileRepositoryImpl(
+            tokenManager = tokenManager,
+            userPreferences = userPreferences
+        )
     }
 }
