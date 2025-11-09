@@ -10,7 +10,9 @@ import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenService
 import bob.colbaskin.umirhack7.common.user_prefs.data.UserPreferencesRepositoryImpl
 import bob.colbaskin.umirhack7.common.user_prefs.data.datastore.UserDataStore
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
+import bob.colbaskin.umirhack7.maplibre.data.LocationRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.OfflineMapRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import dagger.Module
 import dagger.Provides
@@ -75,5 +77,11 @@ object RepositoryModule {
     @Singleton
     fun provideOfflineMapRepository(offlineManager: OfflineManager): OfflineMapRepository {
         return OfflineMapRepositoryImpl(offlineManager = offlineManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationRepository(@ApplicationContext context: Context): LocationRepository {
+        return LocationRepositoryImpl(context)
     }
 }

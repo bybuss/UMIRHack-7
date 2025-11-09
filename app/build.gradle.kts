@@ -139,4 +139,7 @@ dependencies {
     implementation(libs.maplibre.composeMaterial3)
     implementation(libs.play.services.location)
 
+    // Permissions
+    implementation(libs.accompanist.permissions)
+    implementation(libs.kotlinx.coroutines.play.services)
 }
