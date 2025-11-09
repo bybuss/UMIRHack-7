@@ -1,18 +1,36 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
+import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.NearbyError
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -148,6 +166,7 @@ fun MainScreen(
                         }
                         is UiState.Success -> {
                             MainMapScreen(
+                                state = state,
                                 regions = regionsState.data,
                                 isLoading = state.isLoading,
                                 locationState = state.locationState,
@@ -178,85 +197,133 @@ fun MainScreen(
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainMapScreen(
+    state: MapLibreState,
     regions: List<OfflineRegion>,
     isLoading: Boolean,
     locationState: LocationState,
     locationPermissionState: LocationPermissionState,
     onAction: (MapLibreAction) -> Unit
 ) {
-    Column {
-        if (locationState.currentLocation != null) {
-            Text(
-                text = "Ваше местоположение: ${locationState.cityName ?: "Неизвестно"}",
-                modifier = Modifier.padding(16.dp)
+    Scaffold (
+        floatingActionButton = {
+            FAB(
+                state = state,
+                onAction = onAction,
+                locationPermissionState = locationPermissionState
+            )
+        },
+        topBar = {
+            Row (
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            ) {
+                Text(text = locationState.cityName ?: "Неизвестно")
+            }
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            MaplibreMap(
+                baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+                options = MapOptions(
+                    renderOptions = RenderOptions.Standard,
+                    gestureOptions = GestureOptions.Standard,
+                    ornamentOptions = OrnamentOptions.AllDisabled
+                ),
+                modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
 
-        Button(
-            onClick = { onAction(MapLibreAction.GetCurrentLocation) },
-            modifier = Modifier.padding(16.dp),
-            enabled = !isLoading && locationPermissionState.hasPermission
+@Composable
+fun FAB(
+    state: MapLibreState,
+    onAction: (MapLibreAction) -> Unit,
+    locationPermissionState: LocationPermissionState
+) {
+    val context = LocalContext.current
+
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        AnimatedVisibility(
+            visible = state.isFabExpanded,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
         ) {
-            if (locationState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-            } else {
-                Text("Обновить местоположение")
-            }
-        }
-
-        Button(
-            onClick = { onAction(MapLibreAction.LoadOfflineRegions) },
-            modifier = Modifier.padding(16.dp),
-            enabled = !isLoading
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-            } else {
-                Text("Обновить список регионов")
-            }
-        }
-
-        if (!locationPermissionState.hasPermission) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Для определения вашего региона необходимо разрешение на геолокацию",
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                Button(
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ExtendedFloatingActionButton(
                     onClick = {
-                        locationPermissionState.requestPermission()
+                        onAction(MapLibreAction.CloseFabMenu)
+                        onAction(MapLibreAction.GetCurrentLocation)
                     },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Запросить разрешение на геолокацию")
+                    icon = {
+                        if (state.locationState.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Местоположение"
+                            )
+                        }
+                    },
+                    text = {
+                        Text("Обновить местоположение")
+                    }
+                )
+
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        if (!state.isLoading) {
+                            onAction(MapLibreAction.CloseFabMenu)
+                            onAction(MapLibreAction.LoadOfflineRegions)
+                        } else {
+                            Toast.makeText(context, "Подождите окончание загрузки!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    icon = {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Обновить регионы")
+                        }
+                    },
+                    text = {
+                        Text("Скачать оффлайн карту региона")
+                    },
+                )
+
+                if (!locationPermissionState.hasPermission) {
+                    ExtendedFloatingActionButton(
+                        onClick = {
+                            onAction(MapLibreAction.CloseFabMenu)
+                            locationPermissionState.requestPermission()
+                        },
+                        icon = {
+                            Icon(Icons.Default.NearbyError, contentDescription = "Разрешение")
+                        },
+                        text = {
+                            Text("Запросить разрешение")
+                        }
+                    )
                 }
             }
         }
 
-        Text(
-            text = "Оффлайн регионов: ${regions.size}",
-            modifier = Modifier.padding(16.dp)
-        )
-
-        Text(
-            text = "Список регионов: ${regions.map { it.id }}",
-            modifier = Modifier.padding(16.dp)
-        )
-
-        Text(
-            text = "Отладка: разрешение = ${locationPermissionState.hasPermission}",
-            modifier = Modifier.padding(16.dp)
-        )
-
-        MaplibreMap(
-            baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-            options = MapOptions(
-                renderOptions = RenderOptions.Standard,
-                gestureOptions = GestureOptions.Standard,
-                ornamentOptions = OrnamentOptions.AllDisabled
-            ),
-            modifier = Modifier.weight(1f)
-        )
+        FloatingActionButton(
+            onClick = { onAction(MapLibreAction.ToggleFabExpand) }
+        ) {
+            Icon(
+                imageVector = if (state.isFabExpanded) Icons.Default.Close else Icons.Default.Menu,
+                contentDescription = "Меню"
+            )
+        }
     }
 }
 

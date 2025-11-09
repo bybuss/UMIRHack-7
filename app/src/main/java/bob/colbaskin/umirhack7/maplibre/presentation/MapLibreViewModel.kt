@@ -58,6 +58,12 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.GetCurrentLocation -> getCurrentLocation()
             MapLibreAction.DismissRegionSuggestion -> dismissRegionSuggestion()
             is MapLibreAction.DeleteRegion -> deleteRegion(action.regionId)
+            MapLibreAction.CloseFabMenu -> {
+                state = state.copy(isFabExpanded = false)
+            }
+            MapLibreAction.ToggleFabExpand -> {
+                state = state.copy(isFabExpanded = !state.isFabExpanded)
+            }
         }
     }
 
