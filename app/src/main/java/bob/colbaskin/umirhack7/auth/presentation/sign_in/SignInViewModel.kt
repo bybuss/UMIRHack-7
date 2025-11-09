@@ -25,7 +25,7 @@ class SignInViewModel @Inject constructor(
 
     fun onAction(action: SignInAction) {
         when (action) {
-            is SignInAction.UpdateEmail -> updateEmail(action.email)
+            is SignInAction.UpdateUserName -> updateUserName(action.username)
             is SignInAction.UpdatePassword -> updatePassword(action.password)
             SignInAction.SignIn -> login()
             else -> Unit
@@ -35,21 +35,21 @@ class SignInViewModel @Inject constructor(
     private fun login() {
         state = state.copy(isLoading = true)
         viewModelScope.launch {
-            val response = authRepository.login(
-                email = state.email,
+            authRepository.login(
+                username = state.username,
                 password = state.password
             ).toUiState()
 
             state = state.copy(
-                authState = UiState.Success(Unit)/* response */,
+                authState = UiState.Success(Unit),
                 isLoading = false
             )
             userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
         }
     }
 
-    private fun updateEmail(email: String) {
-        state = state.copy(email = email)
+    private fun updateUserName(username: String) {
+        state = state.copy(username = username)
     }
 
     private fun updatePassword(password: String) {
