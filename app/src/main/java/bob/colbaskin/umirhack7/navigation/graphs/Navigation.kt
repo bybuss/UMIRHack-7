@@ -10,14 +10,13 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.navigation
 import bob.colbaskin.umirhack7.auth.presentation.sign_in.SignInScreenRoot
-import bob.colbaskin.umirhack7.auth.presentation.sign_up.SignUpScreenRoot
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.OnboardingConfig
 import bob.colbaskin.umirhack7.maplibre.presentation.MainScreenRoot
 import bob.colbaskin.umirhack7.navigation.Screens
 import bob.colbaskin.umirhack7.navigation.animatedTransition
 import bob.colbaskin.umirhack7.onboarding.presentation.IntroductionScreen
 import bob.colbaskin.umirhack7.onboarding.presentation.WelcomeScreen
-import bob.colbaskin.umirhack7.profile.ProfileScreen
+import bob.colbaskin.umirhack7.profile.presentation.ProfileScreenRoot
 
 
 fun NavGraphBuilder.onboardingGraph(
@@ -48,12 +47,6 @@ fun NavGraphBuilder.onboardingGraph(
                 snackbarHostState = snackbarHostState
             )
         }
-        animatedTransition<Screens.SignUp> {
-            SignUpScreenRoot(
-                navController = navController,
-                snackbarHostState = snackbarHostState
-            )
-        }
     }
 }
 
@@ -76,7 +69,7 @@ fun NavGraphBuilder.mainGraph(
             MainScreenRoot()
         }
         animatedTransition<Screens.Profile> {
-            ProfileScreen()
+            ProfileScreenRoot()
         }
     }
 }
