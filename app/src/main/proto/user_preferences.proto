@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+import "auth_status.proto";
+import "onboarding_status.proto";
+
+option java_package = "bob.colbaskin.umirhack7.datastore";
+option java_multiple_files = true;
+
+message UserPreferencesProto {
+  OnboardingStatus onboardingStatus = 1;
+  AuthStatus authStatus = 2;
+}
