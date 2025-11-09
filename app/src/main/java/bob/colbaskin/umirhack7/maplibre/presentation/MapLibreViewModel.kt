@@ -27,10 +27,6 @@ class MapLibreViewModel @Inject constructor(
     private val locationRepository: LocationRepository
 ) : ViewModel() {
 
-    companion object {
-        private const val TAG = "MainViewModel"
-    }
-
     var state by mutableStateOf(MapLibreState())
         private set
 
@@ -40,6 +36,7 @@ class MapLibreViewModel @Inject constructor(
 
     init {
         loadOfflineRegions()
+        checkForIncompleteDownloads()
     }
 
     fun onAction(action: MapLibreAction) {
@@ -72,23 +69,60 @@ class MapLibreViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val regions = repository.getAllOfflineRegions()
+                val allRegions = repository.getAllOfflineRegions()
+
+                val completedRegions = allRegions.filter { region ->
+                    try {
+                        val status = repository.getDownloadStatus(region)
+                        status.isComplete
+                    } catch (e: Exception) {
+                        Log.e(TAG, e.message.toString())
+                        false
+                    }
+                }
+
                 state = state.copy(
-                    regionsState = UiState.Success(regions),
+                    regionsState = UiState.Success(completedRegions),
                     isLoading = false
                 )
 
-                checkRegionSuggestion(regions)
+                checkRegionSuggestion(completedRegions)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading offline regions: ${e.message}")
-                state = state.copy(
-                    regionsState = UiState.Error(
-                        title = "Ошибка загрузки",
-                        text = e.message ?: "Неизвестная ошибка"
-                    ),
-                    isLoading = false
-                )
+                Log.e(TAG, e.message.toString())
+            }
+        }
+    }
+
+    private fun checkForIncompleteDownloads() {
+        viewModelScope.launch {
+            try {
+                val allRegions = repository.getAllOfflineRegions()
+                val incompleteRegions = allRegions.filter { region ->
+                    try {
+                        val status = repository.getDownloadStatus(region)
+                        !status.isComplete
+                    } catch (e: Exception) {
+                        Log.e(TAG, e.message.toString())
+                        false
+                    }
+                }
+
+                incompleteRegions.forEach { region ->
+                    try {
+                        repository.deleteRegion(region)
+                        Log.d(TAG, "Deleted incomplete region: ${region.id}")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error deleting incomplete region: ${e.message}")
+                    }
+                }
+
+                if (incompleteRegions.isNotEmpty()) {
+                    loadOfflineRegions()
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error checking incomplete downloads: ${e.message}")
             }
         }
     }
@@ -176,7 +210,7 @@ class MapLibreViewModel @Inject constructor(
             return
         }
 
-        downloadJob?.cancel()
+        cancelDownload()
 
         state = state.copy(
             isDownloading = true,
@@ -202,18 +236,13 @@ class MapLibreViewModel @Inject constructor(
                     regionName = regionName
                 )
 
+                state = state.copy(currentDownloadRegionId = region.id)
                 currentDownloadRegion = region
+
                 monitorDownloadProgress(region)
 
             } catch (e: Exception) {
-                Log.e(TAG, "Download failed: ${e.message}")
-                state = state.copy(
-                    isDownloading = false,
-                    downloadState = UiState.Error(
-                        title = "Ошибка загрузки",
-                        text = e.message ?: "Неизвестная ошибка"
-                    )
-                )
+                handleDownloadError(e)
             }
         }
     }
@@ -232,14 +261,14 @@ class MapLibreViewModel @Inject constructor(
                 }
 
                 state = state.copy(downloadProgress = progress.coerceIn(0f, 1f))
-                Log.d(TAG, "Download progress: ${(progress * 100).toInt()}%")
 
                 if (status.isComplete) {
                     Log.d(TAG, "Download completed successfully")
                     state = state.copy(
                         isDownloading = false,
                         downloadProgress = 1f,
-                        downloadState = UiState.Success(Unit)
+                        downloadState = UiState.Success(Unit),
+                        currentDownloadRegionId = null
                     )
                     loadOfflineRegions()
                     break
@@ -261,14 +290,7 @@ class MapLibreViewModel @Inject constructor(
 
             } catch (e: Exception) {
                 if (state.isDownloading) {
-                    Log.e(TAG, "Error during download: ${e.message}")
-                    state = state.copy(
-                        isDownloading = false,
-                        downloadState = UiState.Error(
-                            title = "Ошибка загрузки",
-                            text = e.message ?: "Неизвестная ошибка"
-                        )
-                    )
+                    handleDownloadError(e)
                 }
                 break
             }
@@ -278,10 +300,48 @@ class MapLibreViewModel @Inject constructor(
     private fun cancelDownload() {
         Log.d(TAG, "Download cancelled by user")
         downloadJob?.cancel()
+
+        currentDownloadRegion?.let { region ->
+            viewModelScope.launch {
+                try {
+                    repository.deleteRegion(region)
+                    Log.d(TAG, "Region deleted after cancel")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error deleting region after cancel: ${e.message}")
+                }
+            }
+        }
+
         state = state.copy(
             isDownloading = false,
             downloadProgress = 0f,
-            downloadState = UiState.Loading
+            downloadState = UiState.Loading,
+            currentDownloadRegionId = null
+        )
+        currentDownloadRegion = null
+    }
+
+    private fun handleDownloadError(e: Exception) {
+        Log.e(TAG, "Error during download: ${e.message}")
+
+        currentDownloadRegion?.let { region ->
+            viewModelScope.launch {
+                try {
+                    repository.deleteRegion(region)
+                    Log.d(TAG, "Region deleted after error")
+                } catch (deleteException: Exception) {
+                    Log.e(TAG, "Error deleting region after error: ${deleteException.message}")
+                }
+            }
+        }
+
+        state = state.copy(
+            isDownloading = false,
+            downloadState = UiState.Error(
+                title = "Ошибка загрузки",
+                text = e.message ?: "Неизвестная ошибка"
+            ),
+            currentDownloadRegionId = null
         )
         currentDownloadRegion = null
     }

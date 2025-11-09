@@ -22,6 +22,8 @@ class AuthRepositoryImpl @Inject constructor(
         password: String
     ): ApiResult<Unit> {
         Log.d(TAG, "Attempting login for username: $username")
+        //FIXME: deleted after server is online
+        userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
         return safeApiCall<TokenDTO, Unit>(
             apiCall = {
                 authApi.login(

@@ -1,6 +1,6 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
-import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NearbyError
@@ -40,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import bob.colbaskin.umirhack7.common.design_system.theme.UMIRHack7Theme
 import org.maplibre.compose.map.GestureOptions
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
@@ -48,9 +48,11 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.map.RenderOptions
 import org.maplibre.compose.style.BaseStyle
 import bob.colbaskin.umirhack7.common.UiState
+import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.domain.models.LocationState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.LocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.rememberLocationPermissionState
+import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import org.maplibre.android.offline.OfflineRegion
 
@@ -107,7 +109,7 @@ fun MainScreenRoot(
     MainScreen(
         state = state,
         onAction = viewModel::onAction,
-        locationPermissionState = locationPermissionState
+        locationPermissionState = locationPermissionState,
     )
 }
 
@@ -118,73 +120,74 @@ fun MainScreen(
     onAction: (MapLibreAction) -> Unit,
     locationPermissionState: LocationPermissionState
 ) {
-    UMIRHack7Theme {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            if (state.showRegionSuggestion) {
-                AlertDialog(
-                    onDismissRequest = { onAction(MapLibreAction.DismissRegionSuggestion) },
-                    title = { Text("Скачать оффлайн-карту?") },
-                    text = {
-                        Text("Хотите скачать оффлайн-карту для региона ${state.suggestedRegionName}?")
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = { onAction(MapLibreAction.DownloadCurrentRegion) }
-                        ) {
-                            Text("Скачать")
-                        }
-                    },
-                    dismissButton = {
-                        Button(
-                            onClick = { onAction(MapLibreAction.DismissRegionSuggestion) }
-                        ) {
-                            Text("Не сейчас")
-                        }
+    Surface(modifier = Modifier.fillMaxSize()) {
+        if (state.showRegionSuggestion) {
+            AlertDialog(
+                onDismissRequest = { onAction(MapLibreAction.DismissRegionSuggestion) },
+                title = { Text("Скачать оффлайн-карту?") },
+                text = {
+                    Text("Хотите скачать оффлайн-карту для региона ${state.suggestedRegionName}?")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { onAction(MapLibreAction.DownloadCurrentRegion) }
+                    ) {
+                        Text("Скачать")
                     }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { onAction(MapLibreAction.DismissRegionSuggestion) }
+                    ) {
+                        Text("Не сейчас")
+                    }
+                }
+            )
+        }
+
+        when {
+            state.showDownloadScreen -> {
+                DownloadScreen(
+                    progress = state.downloadProgress,
+                    onCancel = { onAction(MapLibreAction.CancelDownload) }
                 )
             }
 
-            when {
-                state.showDownloadScreen -> {
-                    DownloadScreen(
-                        progress = state.downloadProgress,
-                        onCancel = { onAction(MapLibreAction.CancelDownload) }
-                    )
-                }
-                else -> {
-                    when (val regionsState = state.regionsState) {
-                        is UiState.Loading -> {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                CircularProgressIndicator()
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text("Загрузка регионов...")
-                            }
+            else -> {
+                when (val regionsState = state.regionsState) {
+                    is UiState.Loading -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Загрузка регионов...")
                         }
-                        is UiState.Success -> {
-                            MainMapScreen(
-                                state = state,
-                                regions = regionsState.data,
-                                isLoading = state.isLoading,
-                                locationState = state.locationState,
-                                locationPermissionState = locationPermissionState,
-                                onAction = onAction
-                            )
-                        }
-                        is UiState.Error -> {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text("Ошибка загрузки регионов")
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { onAction(MapLibreAction.LoadOfflineRegions) }) {
-                                    Text("Повторить")
-                                }
+                    }
+
+                    is UiState.Success -> {
+                        MainMapScreen(
+                            state = state,
+                            regions = regionsState.data,
+                            isLoading = state.isLoading,
+                            locationState = state.locationState,
+                            locationPermissionState = locationPermissionState,
+                            onAction = onAction
+                        )
+                    }
+
+                    is UiState.Error -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Ошибка загрузки регионов")
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { onAction(MapLibreAction.LoadOfflineRegions) }) {
+                                Text("Повторить")
                             }
                         }
                     }
@@ -204,38 +207,46 @@ fun MainMapScreen(
     locationPermissionState: LocationPermissionState,
     onAction: (MapLibreAction) -> Unit
 ) {
-    Scaffold (
-        floatingActionButton = {
-            FAB(
-                state = state,
-                onAction = onAction,
-                locationPermissionState = locationPermissionState
-            )
-        },
-        topBar = {
-            Row (
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
-            ) {
-                Text(text = locationState.cityName ?: "Неизвестно")
+    if (isLoading) {
+        LoadingScreen()
+    } else {
+        Scaffold (
+            modifier = Modifier.fillMaxSize(),
+            floatingActionButton = {
+                FAB(
+                    state = state,
+                    onAction = onAction,
+                    locationPermissionState = locationPermissionState,
+                    regions = regions
+                )
+            },
+            topBar = {
+                Row (
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(text = locationState.cityName ?: "Неизвестно")
+                }
             }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            MaplibreMap(
-                baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
-                options = MapOptions(
-                    renderOptions = RenderOptions.Standard,
-                    gestureOptions = GestureOptions.Standard,
-                    ornamentOptions = OrnamentOptions.AllDisabled
-                ),
-                modifier = Modifier.fillMaxSize()
-            )
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                MaplibreMap(
+                    baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+                    options = MapOptions(
+                        renderOptions = RenderOptions.Standard,
+                        gestureOptions = GestureOptions.Standard,
+                        ornamentOptions = OrnamentOptions.AllDisabled
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
@@ -244,7 +255,8 @@ fun MainMapScreen(
 fun FAB(
     state: MapLibreState,
     onAction: (MapLibreAction) -> Unit,
-    locationPermissionState: LocationPermissionState
+    locationPermissionState: LocationPermissionState,
+    regions: List<OfflineRegion>,
 ) {
     val context = LocalContext.current
 
@@ -258,6 +270,19 @@ fun FAB(
             exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        Log.i("REGIONS", "регионы: ${regions.map { it.getReadableInfo() }}")
+                    },
+                    icon = {
+                        Icon(Icons.Default.Info, contentDescription = "Информация")
+                    },
+                    text = {
+                        Text("регионы: ${regions.map { it.getReadableInfo() }}")
+                    }
+                )
+
                 ExtendedFloatingActionButton(
                     onClick = {
                         onAction(MapLibreAction.CloseFabMenu)
