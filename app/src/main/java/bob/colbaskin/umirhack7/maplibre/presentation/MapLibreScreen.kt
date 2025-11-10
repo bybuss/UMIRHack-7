@@ -19,8 +19,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
@@ -29,21 +33,37 @@ import androidx.compose.material.icons.filled.NearbyError
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
@@ -52,7 +72,9 @@ import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.domain.models.LocationState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.LocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.rememberLocationPermissionState
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.LOCATION_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.TARGET_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -221,22 +243,31 @@ fun MainMapScreen(
         LoadingScreen()
     } else {
 
-        val cameraPosition = remember {
-            mutableStateOf(
-                CameraPosition(
-                    target = locationState.currentLocation?.let {
-                        LatLng(it.latitude, it.longitude)
-                    } ?: LatLng(55.7558, 37.6173),
-                    zoom = 10.0
-                )
+        val cameraPosition = remember { mutableStateOf(
+            CameraPosition(
+                target = locationState.currentLocation?.let {
+                    LatLng(it.latitude, it.longitude)
+                } ?: LatLng(47.1352, 39.4323),
+                zoom = LOCATION_ZOOM
             )
-        }
+        )}
 
         LaunchedEffect(locationState.currentLocation) {
             locationState.currentLocation?.let { location ->
                 cameraPosition.value = CameraPosition(
                     target = LatLng(location.latitude, location.longitude),
-                    zoom = 10.0
+                    zoom = LOCATION_ZOOM
+                )
+            }
+        }
+
+        LaunchedEffect(state.cameraTarget) {
+            state.cameraTarget?.let { target ->
+                cameraPosition.value = CameraPosition(
+                    target = target,
+                    zoom = TARGET_ZOOM,
+                    animationDurationMs = 1200
+
                 )
             }
         }
@@ -252,15 +283,11 @@ fun MainMapScreen(
                 )
             },
             topBar = {
-                Row (
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Text(text = locationState.cityName ?: "Неизвестно")
-                }
+                TopBarWithFields(
+                    state = state,
+                    locationState = locationState,
+                    onAction = onAction
+                )
             }
         ) { innerPadding ->
             Box(
@@ -273,11 +300,13 @@ fun MainMapScreen(
                     styleBuilder = Style.Builder().fromUri(MAP_STYLE_URL),
                     cameraPosition = cameraPosition.value
                 ) {
-
                     if (state.showFields) {
                         when (val fieldsState = state.fieldsState) {
                             is UiState.Success -> {
-                                FieldsRenderer(fields = fieldsState.data)
+                                FieldsRenderer(
+                                    fields = fieldsState.data,
+                                    selectedField = state.selectedField
+                                )
                             }
                             is UiState.Error -> {
                                 Toast.makeText(
@@ -292,28 +321,180 @@ fun MainMapScreen(
                         }
                     }
                 }
+
+                state.selectedField?.let { field ->
+                    FieldInfoCard(
+                        field = field,
+                        onClose = { onAction(MapLibreAction.ClearSelectedField) }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopBarWithFields(
+    state: MapLibreState,
+    locationState: LocationState,
+    onAction: (MapLibreAction) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = locationState.cityName ?: "Неизвестно",
+            modifier = Modifier.weight(1f)
+        )
+
+        when (val fieldsState = state.fieldsState) {
+            is UiState.Success -> {
+                Box(
+                    modifier = Modifier.wrapContentSize(Alignment.TopEnd)
+                ) {
+                    OutlinedButton(
+                        onClick = { expanded = true },
+                        colors = ButtonDefaults.outlinedButtonColors()
+                    ) {
+                        Text(
+                            text = state.selectedField?.name ?: "Поля (${fieldsState.data.size})",
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Icon(
+                            imageVector = if (expanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                            contentDescription = "Список полей"
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Все поля") },
+                            onClick = {
+                                onAction(MapLibreAction.ClearSelectedField)
+                                expanded = false
+                            }
+                        )
+                        HorizontalDivider(modifier = Modifier.fillMaxWidth())
+
+                        fieldsState.data.forEach { field ->
+                            DropdownMenuItem(
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = field.name,
+                                            fontWeight = if (field == state.selectedField) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                        Text(
+                                            text = "Площадь: ${"%.2f".format(field.area / 10000)} га",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    onAction(MapLibreAction.SelectField(field))
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+            is UiState.Loading -> {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+            }
+            is UiState.Error -> {
+                Icon(
+                    imageVector = Icons.Filled.Error,
+                    contentDescription = "Ошибка загрузки полей",
+                    tint = Color.Red
+                )
             }
         }
     }
 }
 
 @Composable
-fun FieldsRenderer(fields: List<Field>) {
+fun FieldInfoCard(field: Field, onClose: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = field.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Filled.Close, contentDescription = "Закрыть")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = "Площадь: ${"%.2f".format(field.area / 10000)} га")
+            Text(text = "Количество зон: ${field.zones.size}")
+            Text(text = "Цвет: ${field.color}")
+
+            if (field.zones.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Зоны:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                field.zones.forEach { zone ->
+                    Text(
+                        text = "• ${zone.name} (${"%.2f".format(zone.area / 10000)} га)",
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FieldsRenderer(fields: List<Field>, selectedField: Field? = null) {
     fields.forEach { field ->
+        val isSelected = field == selectedField
+
         Polygon(
             vertices = field.geometry.toLatLngList(),
             fillColor = field.color,
-            opacity = 0.4f,
-            borderWidth = 3.0f,
-            borderColor = field.color,
+            opacity = if (isSelected) 0.6f else 0.4f,
+            borderWidth = if (isSelected) 5.0f else 3.0f,
+            borderColor = if (isSelected) "#FFD700" else field.color,
         )
 
         field.zones.forEach { zone ->
             Polygon(
                 vertices = zone.geometry.toLatLngList(),
                 fillColor = zone.color,
-                opacity = 0.7f,
-                borderWidth = 2.0f,
+                opacity = if (isSelected) 0.9f else 0.7f,
+                borderWidth = if (isSelected) 3.0f else 2.0f,
                 borderColor = zone.color,
             )
         }

@@ -14,10 +14,12 @@ import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.takeIfSuccess
+import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.data.notifocation.MapDownloadService
 import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
+import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.BOUNDS_PADDING
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MAX_ZOOM
@@ -115,8 +117,40 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.ToggleFieldsVisibility -> {
                 state = state.copy(showFields = !state.showFields)
             }
+            is MapLibreAction.SelectField -> {
+                val fieldCenter = calculateFieldCenter(action.field)
+                state = state.copy(
+                    selectedField = action.field,
+                    cameraTarget = fieldCenter
+                )
+            }
+            MapLibreAction.ClearSelectedField -> {
+                state = state.copy(selectedField = null, cameraTarget = null)
+            }
             else -> Unit
         }
+    }
+
+    private fun calculateFieldCenter(field: Field): LatLng {
+        val vertices = field.geometry.toLatLngList()
+        if (vertices.isEmpty()) return LatLng(0.0, 0.0)
+
+        var minLat = Double.MAX_VALUE
+        var maxLat = -Double.MAX_VALUE
+        var minLon = Double.MAX_VALUE
+        var maxLon = -Double.MAX_VALUE
+
+        vertices.forEach { latLng ->
+            minLat = minOf(minLat, latLng.latitude)
+            maxLat = maxOf(maxLat, latLng.latitude)
+            minLon = minOf(minLon, latLng.longitude)
+            maxLon = maxOf(maxLon, latLng.longitude)
+        }
+
+        return LatLng(
+            (minLat + maxLat) / 2,
+            (minLon + maxLon) / 2
+        )
     }
 
     private fun loadFields() {

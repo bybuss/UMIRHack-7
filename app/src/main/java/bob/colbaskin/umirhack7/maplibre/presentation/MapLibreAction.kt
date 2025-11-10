@@ -1,5 +1,7 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
+import bob.colbaskin.umirhack7.maplibre.domain.models.Field
+
 sealed interface MapLibreAction {
     data object LoadOfflineRegions : MapLibreAction
     data object DownloadCurrentRegion : MapLibreAction
@@ -12,4 +14,6 @@ sealed interface MapLibreAction {
     data object CloseFabMenu : MapLibreAction
     data object LoadFields : MapLibreAction
     data object ToggleFieldsVisibility : MapLibreAction
+    data class SelectField(val field: Field) : MapLibreAction
+    data object ClearSelectedField : MapLibreAction
 }
