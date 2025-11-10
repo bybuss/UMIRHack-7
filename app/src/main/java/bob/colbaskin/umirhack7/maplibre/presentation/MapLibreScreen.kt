@@ -1,5 +1,6 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -30,7 +31,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,10 +52,14 @@ import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.domain.models.LocationState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.LocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.rememberLocationPermissionState
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
 import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import org.maplibre.android.offline.OfflineRegion
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreenRoot(
     viewModel: MapLibreViewModel = hiltViewModel()
@@ -63,10 +67,12 @@ fun MainScreenRoot(
     val state = viewModel.state
     val context = LocalContext.current
     val locationPermissionState = rememberLocationPermissionState()
+    val notificationPermissionState = rememberPermissionState(
+        android.Manifest.permission.POST_NOTIFICATIONS
+    )
 
     LaunchedEffect(locationPermissionState.hasPermission) {
         if (locationPermissionState.hasPermission) {
-            viewModel.onAction(MapLibreAction.RequestLocationPermission)
             viewModel.onAction(MapLibreAction.GetCurrentLocation)
         }
     }
@@ -74,6 +80,12 @@ fun MainScreenRoot(
     LaunchedEffect(Unit) {
         if (!locationPermissionState.hasPermission) {
             locationPermissionState.requestPermission()
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!notificationPermissionState.status.isGranted) {
+                notificationPermissionState.launchPermissionRequest()
+            }
         }
     }
 
@@ -145,51 +157,40 @@ fun MainScreen(
             )
         }
 
-        when {
-            state.showDownloadScreen -> {
-                DownloadScreen(
-                    progress = state.downloadProgress,
-                    onCancel = { onAction(MapLibreAction.CancelDownload) }
+        when (val regionsState = state.regionsState) {
+            is UiState.Loading -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Загрузка регионов...")
+                }
+            }
+
+            is UiState.Success -> {
+                MainMapScreen(
+                    state = state,
+                    regions = regionsState.data,
+                    isLoading = state.isLoading,
+                    locationState = state.locationState,
+                    locationPermissionState = locationPermissionState,
+                    onAction = onAction
                 )
             }
 
-            else -> {
-                when (val regionsState = state.regionsState) {
-                    is UiState.Loading -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Загрузка регионов...")
-                        }
-                    }
-
-                    is UiState.Success -> {
-                        MainMapScreen(
-                            state = state,
-                            regions = regionsState.data,
-                            isLoading = state.isLoading,
-                            locationState = state.locationState,
-                            locationPermissionState = locationPermissionState,
-                            onAction = onAction
-                        )
-                    }
-
-                    is UiState.Error -> {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text("Ошибка загрузки регионов")
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { onAction(MapLibreAction.LoadOfflineRegions) }) {
-                                Text("Повторить")
-                            }
-                        }
+            is UiState.Error -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Ошибка загрузки регионов")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { onAction(MapLibreAction.LoadOfflineRegions) }) {
+                        Text("Повторить")
                     }
                 }
             }
@@ -239,7 +240,7 @@ fun MainMapScreen(
                     .padding(innerPadding)
             ) {
                 MaplibreMap(
-                    baseStyle = BaseStyle.Uri("https://tiles.openfreemap.org/styles/liberty"),
+                    baseStyle = BaseStyle.Uri(MAP_STYLE_URL),
                     options = MapOptions(
                         renderOptions = RenderOptions.Standard,
                         gestureOptions = GestureOptions.Standard,
@@ -350,32 +351,6 @@ fun FAB(
                 imageVector = if (state.isFabExpanded) Icons.Default.Close else Icons.Default.Menu,
                 contentDescription = "Меню"
             )
-        }
-    }
-}
-
-@Composable
-fun DownloadScreen(
-    progress: Float,
-    onCancel: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Загрузка оффлайн-карты...")
-        Spacer(modifier = Modifier.height(16.dp))
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Text("${(progress * 100).toInt()}%")
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onCancel) {
-            Text("Отменить загрузку")
         }
     }
 }

@@ -1,5 +1,6 @@
 package bob.colbaskin.umirhack7.di
 
+import android.app.NotificationManager
 import android.content.Context
 import bob.colbaskin.umirhack7.auth.data.AuthRepositoryImpl
 import bob.colbaskin.umirhack7.auth.data.RefreshTokenRepositoryImpl
@@ -13,7 +14,9 @@ import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepositor
 import bob.colbaskin.umirhack7.di.token.TokenManager
 import bob.colbaskin.umirhack7.maplibre.data.LocationRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.OfflineMapRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.data.notifocation.NotificationRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
+import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
@@ -100,5 +103,17 @@ object RepositoryModule {
             tokenManager = tokenManager,
             userPreferences = userPreferences
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationManager(@ApplicationContext context: Context): NotificationManager {
+        return context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository(@ApplicationContext context: Context): NotificationRepository {
+        return NotificationRepositoryImpl(context)
     }
 }

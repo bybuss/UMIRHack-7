@@ -1,16 +1,29 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.takeIfSuccess
+import bob.colbaskin.umirhack7.maplibre.data.notifocation.MapDownloadService
 import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
+import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.BOUNDS_PADDING
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MAX_ZOOM
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MIN_ZOOM
+import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import jakarta.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -24,7 +37,9 @@ private const val TAG = "MapLibre"
 @HiltViewModel
 class MapLibreViewModel @Inject constructor(
     private val repository: OfflineMapRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val notificationRepository: NotificationRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     var state by mutableStateOf(MapLibreState())
@@ -33,10 +48,49 @@ class MapLibreViewModel @Inject constructor(
     private var downloadJob: Job? = null
     private var currentDownloadRegion: OfflineRegion? = null
     private var currentUserLocation: LatLng? = null
+    private var isDownloadCancelled = false
+    private var broadcastReceived = false
+
+    private val downloadCancelledReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == MapDownloadService.ACTION_DOWNLOAD_CANCELLED) {
+                if (!broadcastReceived) {
+                    broadcastReceived = true
+                    Log.d(TAG, "Download cancelled from notification")
+                    if (!isDownloadCancelled) {
+                        isDownloadCancelled = true
+                        cancelDownload()
+                    }
+                }
+            }
+        }
+    }
 
     init {
         loadOfflineRegions()
         checkForIncompleteDownloads()
+        registerBroadcastReceiver()
+    }
+
+    private fun registerBroadcastReceiver() {
+        val filter = IntentFilter(MapDownloadService.ACTION_DOWNLOAD_CANCELLED)
+
+        ContextCompat.registerReceiver(
+            context,
+            downloadCancelledReceiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        try {
+            context.unregisterReceiver(downloadCancelledReceiver)
+        } catch (e: Exception) {
+            Log.e(TAG, e.message.toString())
+        }
+        downloadJob?.cancel()
     }
 
     fun onAction(action: MapLibreAction) {
@@ -45,13 +99,6 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.DownloadCurrentRegion -> downloadCurrentRegion()
             MapLibreAction.CancelDownload -> cancelDownload()
             MapLibreAction.ClearError -> clearError()
-            MapLibreAction.RequestLocationPermission -> {
-                state = state.copy(
-                    locationState = state.locationState.copy(
-                        hasPermission = true
-                    )
-                )
-            }
             MapLibreAction.GetCurrentLocation -> getCurrentLocation()
             MapLibreAction.DismissRegionSuggestion -> dismissRegionSuggestion()
             is MapLibreAction.DeleteRegion -> deleteRegion(action.regionId)
@@ -61,6 +108,7 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.ToggleFabExpand -> {
                 state = state.copy(isFabExpanded = !state.isFabExpanded)
             }
+            else -> Unit
         }
     }
 
@@ -201,16 +249,13 @@ class MapLibreViewModel @Inject constructor(
         val regionName = state.suggestedRegionName ?: "Текущий регион"
 
         if (location == null) {
-            state = state.copy(
-                downloadState = UiState.Error(
-                    title = "Ошибка",
-                    text = "Не удалось определить местоположение"
-                )
-            )
+            viewModelScope.launch {
+                notificationRepository.showDownloadError(regionName, "Не удалось определить местоположение")
+            }
             return
         }
 
-        cancelDownload()
+        downloadJob?.cancel()
 
         state = state.copy(
             isDownloading = true,
@@ -219,80 +264,92 @@ class MapLibreViewModel @Inject constructor(
             showRegionSuggestion = false
         )
 
+        viewModelScope.launch {
+            notificationRepository.startDownloadService(regionName)
+        }
+
         downloadJob = viewModelScope.launch {
             try {
                 Log.d(TAG, "Starting current region download: $regionName")
 
                 val bounds = LatLngBounds.Builder()
-                    .include(LatLng(location.latitude - 0.18, location.longitude - 0.18))
-                    .include(LatLng(location.latitude + 0.18, location.longitude + 0.18))
+                    .include(LatLng(location.latitude - BOUNDS_PADDING, location.longitude - BOUNDS_PADDING))
+                    .include(LatLng(location.latitude + BOUNDS_PADDING, location.longitude + BOUNDS_PADDING))
                     .build()
 
                 val region = repository.downloadRegion(
-                    styleUrl = "https://tiles.openfreemap.org/styles/liberty",
+                    styleUrl = MAP_STYLE_URL,
                     bounds = bounds,
-                    minZoom = 0.0,
-                    maxZoom = 30.0,
+                    minZoom = DEFAULT_MIN_ZOOM,
+                    maxZoom = DEFAULT_MAX_ZOOM,
                     regionName = regionName
                 )
 
                 state = state.copy(currentDownloadRegionId = region.id)
                 currentDownloadRegion = region
-
-                monitorDownloadProgress(region)
+                monitorDownloadProgress(region, regionName)
 
             } catch (e: Exception) {
-                handleDownloadError(e)
+                Log.e(TAG, "Download failed: ${e.message}")
+                handleDownloadError(e, regionName)
             }
         }
     }
 
-    private suspend fun monitorDownloadProgress(region: OfflineRegion) {
+    private fun monitorDownloadProgress(region: OfflineRegion, regionName: String) {
         var lastProgressTime = System.currentTimeMillis()
         var lastCompletedCount = 0L
 
-        while (state.isDownloading) {
-            try {
-                val status = repository.getDownloadStatus(region)
-                val progress = if (status.requiredResourceCount > 0) {
-                    status.completedResourceCount.toFloat() / status.requiredResourceCount.toFloat()
-                } else {
-                    0f
-                }
+        viewModelScope.launch {
+            while (state.isDownloading) {
+                try {
+                    val status = repository.getDownloadStatus(region)
+                    val progress = if (status.requiredResourceCount > 0) {
+                        status.completedResourceCount.toFloat() / status.requiredResourceCount.toFloat()
+                    } else {
+                        0f
+                    }
 
-                state = state.copy(downloadProgress = progress.coerceIn(0f, 1f))
+                    val progressPercent = (progress * 100).toInt()
+                    state = state.copy(downloadProgress = progress)
 
-                if (status.isComplete) {
-                    Log.d(TAG, "Download completed successfully")
-                    state = state.copy(
-                        isDownloading = false,
-                        downloadProgress = 1f,
-                        downloadState = UiState.Success(Unit),
-                        currentDownloadRegionId = null
-                    )
-                    loadOfflineRegions()
+                    notificationRepository.updateDownloadProgress(regionName, progressPercent)
+                    Log.d(TAG, "Download progress: $progressPercent%")
+
+                    if (status.isComplete) {
+                        Log.d(TAG, "Download completed successfully")
+                        state = state.copy(
+                            isDownloading = false,
+                            downloadProgress = 1f,
+                            downloadState = UiState.Success(Unit),
+                            currentDownloadRegionId = null
+                        )
+
+                        notificationRepository.completeDownload(regionName)
+                        loadOfflineRegions()
+                        break
+                    }
+
+                    val currentTime = System.currentTimeMillis()
+                    if (status.completedResourceCount > lastCompletedCount) {
+                        lastProgressTime = currentTime
+                        lastCompletedCount = status.completedResourceCount
+                    } else if (currentTime - lastProgressTime > 30000) {
+                        throw Exception("Нет прогресса в течение 30 секунд - проверьте соединение")
+                    }
+
+                    if (currentTime - lastProgressTime > 600000) {
+                        throw Exception("Таймаут загрузки")
+                    }
+
+                    delay(1000)
+
+                } catch (e: Exception) {
+                    if (state.isDownloading) {
+                        handleDownloadError(e, regionName)
+                    }
                     break
                 }
-
-                val currentTime = System.currentTimeMillis()
-                if (status.completedResourceCount > lastCompletedCount) {
-                    lastProgressTime = currentTime
-                    lastCompletedCount = status.completedResourceCount
-                } else if (currentTime - lastProgressTime > 30000) {
-                    throw Exception("No progress for 30 seconds - check connection")
-                }
-
-                if (currentTime - lastProgressTime > 600000) {
-                    throw Exception("Download timeout")
-                }
-
-                delay(1000)
-
-            } catch (e: Exception) {
-                if (state.isDownloading) {
-                    handleDownloadError(e)
-                }
-                break
             }
         }
     }
@@ -319,10 +376,16 @@ class MapLibreViewModel @Inject constructor(
             currentDownloadRegionId = null
         )
         currentDownloadRegion = null
+
+        viewModelScope.launch {
+            notificationRepository.cancelDownloadNotification()
+        }
     }
 
-    private fun handleDownloadError(e: Exception) {
+    private fun handleDownloadError(e: Exception, regionName: String) {
         Log.e(TAG, "Error during download: ${e.message}")
+
+        val userFriendlyError = getErrorDescription(e)
 
         currentDownloadRegion?.let { region ->
             viewModelScope.launch {
@@ -335,15 +398,33 @@ class MapLibreViewModel @Inject constructor(
             }
         }
 
+        viewModelScope.launch {
+            notificationRepository.showDownloadError(regionName, userFriendlyError)
+        }
+
         state = state.copy(
             isDownloading = false,
             downloadState = UiState.Error(
                 title = "Ошибка загрузки",
-                text = e.message ?: "Неизвестная ошибка"
+                text = userFriendlyError
             ),
             currentDownloadRegionId = null
         )
         currentDownloadRegion = null
+    }
+
+    private fun getErrorDescription(exception: Exception): String {
+        return when {
+            exception.message?.contains("network", ignoreCase = true) == true ->
+                "Проверьте подключение к интернету и повторите попытку"
+            exception.message?.contains("timeout", ignoreCase = true) == true ->
+                "Загрузка заняла слишком много времени. Попробуйте еще раз"
+            exception.message?.contains("storage", ignoreCase = true) == true ->
+                "Недостаточно места на устройстве. Освободите место и попробуйте снова"
+            exception.message?.contains("Нет прогресса", ignoreCase = true) == true ->
+                "Загрузка остановилась. Проверьте стабильность интернет-соединения"
+            else -> "Попробуйте повторить загрузку позже"
+        }
     }
 
     private fun deleteRegion(regionId: Long) {

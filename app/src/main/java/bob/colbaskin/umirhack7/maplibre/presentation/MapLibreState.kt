@@ -15,7 +15,4 @@ data class MapLibreState(
     val suggestedRegionName: String? = null,
     val isFabExpanded: Boolean = false,
     val currentDownloadRegionId: Long? = null
-) {
-    val showDownloadScreen: Boolean
-        get() = isDownloading
-}
+)
