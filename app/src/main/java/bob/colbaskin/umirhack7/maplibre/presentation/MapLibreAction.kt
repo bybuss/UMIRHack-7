@@ -10,4 +10,6 @@ sealed interface MapLibreAction {
     data class DeleteRegion(val regionId: Long) : MapLibreAction
     data object ToggleFabExpand : MapLibreAction
     data object CloseFabMenu : MapLibreAction
+    data object LoadFields : MapLibreAction
+    data object ToggleFieldsVisibility : MapLibreAction
 }

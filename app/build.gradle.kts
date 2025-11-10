@@ -138,6 +138,7 @@ dependencies {
     implementation(libs.maplibre.compose)
     implementation(libs.maplibre.composeMaterial3)
     implementation(libs.play.services.location)
+    implementation(libs.ramani.maplibre)
 
     // Permissions
     implementation(libs.accompanist.permissions)

@@ -1,10 +1,10 @@
-package bob.colbaskin.umirhack7.maplibre.data
+package bob.colbaskin.umirhack7.maplibre.data.location
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Geocoder
 import android.util.Log
-import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
+import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority

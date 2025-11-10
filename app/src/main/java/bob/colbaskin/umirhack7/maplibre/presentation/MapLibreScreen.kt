@@ -1,5 +1,6 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
+import android.Manifest
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NearbyError
@@ -36,19 +38,17 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import org.maplibre.compose.map.GestureOptions
-import org.maplibre.compose.map.MapOptions
-import org.maplibre.compose.map.MaplibreMap
-import org.maplibre.compose.map.OrnamentOptions
-import org.maplibre.compose.map.RenderOptions
-import org.maplibre.compose.style.BaseStyle
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
+import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
+import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.domain.models.LocationState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.LocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.presentation.location.rememberLocationPermissionState
@@ -57,7 +57,12 @@ import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.Style
 import org.maplibre.android.offline.OfflineRegion
+import org.ramani.compose.CameraPosition
+import org.ramani.compose.MapLibre
+import org.ramani.compose.Polygon
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -68,7 +73,7 @@ fun MainScreenRoot(
     val context = LocalContext.current
     val locationPermissionState = rememberLocationPermissionState()
     val notificationPermissionState = rememberPermissionState(
-        android.Manifest.permission.POST_NOTIFICATIONS
+        Manifest.permission.POST_NOTIFICATIONS
     )
 
     LaunchedEffect(locationPermissionState.hasPermission) {
@@ -116,6 +121,10 @@ fun MainScreenRoot(
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             viewModel.onAction(MapLibreAction.ClearError)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.onAction(MapLibreAction.LoadFields)
     }
 
     MainScreen(
@@ -212,6 +221,26 @@ fun MainMapScreen(
         LoadingScreen()
     } else {
 
+        val cameraPosition = remember {
+            mutableStateOf(
+                CameraPosition(
+                    target = locationState.currentLocation?.let {
+                        LatLng(it.latitude, it.longitude)
+                    } ?: LatLng(55.7558, 37.6173),
+                    zoom = 10.0
+                )
+            )
+        }
+
+        LaunchedEffect(locationState.currentLocation) {
+            locationState.currentLocation?.let { location ->
+                cameraPosition.value = CameraPosition(
+                    target = LatLng(location.latitude, location.longitude),
+                    zoom = 10.0
+                )
+            }
+        }
+
         Scaffold (
             modifier = Modifier.fillMaxSize(),
             floatingActionButton = {
@@ -239,19 +268,56 @@ fun MainMapScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                MaplibreMap(
-                    baseStyle = BaseStyle.Uri(MAP_STYLE_URL),
-                    options = MapOptions(
-                        renderOptions = RenderOptions.Standard,
-                        gestureOptions = GestureOptions.Standard,
-                        ornamentOptions = OrnamentOptions.AllDisabled
-                    ),
-                    modifier = Modifier.fillMaxSize()
-                )
+                MapLibre(
+                    modifier = Modifier.fillMaxSize(),
+                    styleBuilder = Style.Builder().fromUri(MAP_STYLE_URL),
+                    cameraPosition = cameraPosition.value
+                ) {
+
+                    if (state.showFields) {
+                        when (val fieldsState = state.fieldsState) {
+                            is UiState.Success -> {
+                                FieldsRenderer(fields = fieldsState.data)
+                            }
+                            is UiState.Error -> {
+                                Toast.makeText(
+                                    LocalContext.current,
+                                    fieldsState.title,
+                                    Toast.LENGTH_SHORT
+                                )
+                            }
+                            is UiState.Loading -> {
+                                LoadingScreen()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+}
 
+@Composable
+fun FieldsRenderer(fields: List<Field>) {
+    fields.forEach { field ->
+        Polygon(
+            vertices = field.geometry.toLatLngList(),
+            fillColor = field.color,
+            opacity = 0.4f,
+            borderWidth = 3.0f,
+            borderColor = field.color,
+        )
+
+        field.zones.forEach { zone ->
+            Polygon(
+                vertices = zone.geometry.toLatLngList(),
+                fillColor = zone.color,
+                opacity = 0.7f,
+                borderWidth = 2.0f,
+                borderColor = zone.color,
+            )
+        }
+    }
 }
 
 @Composable
@@ -273,6 +339,19 @@ fun FAB(
             exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        onAction(MapLibreAction.CloseFabMenu)
+                        onAction(MapLibreAction.ToggleFieldsVisibility)
+                    },
+                    icon = {
+                        Icon(Icons.Default.Layers, contentDescription = "Поля")
+                    },
+                    text = {
+                        Text(if (state.showFields) "Скрыть поля" else "Показать поля")
+                    }
+                )
 
                 ExtendedFloatingActionButton(
                     onClick = {

@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -12,12 +11,14 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.takeIfSuccess
 import bob.colbaskin.umirhack7.maplibre.data.notifocation.MapDownloadService
-import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
+import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
+import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.BOUNDS_PADDING
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MAX_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MIN_ZOOM
@@ -39,6 +40,7 @@ class MapLibreViewModel @Inject constructor(
     private val repository: OfflineMapRepository,
     private val locationRepository: LocationRepository,
     private val notificationRepository: NotificationRepository,
+    private val fieldsRepository: FieldsRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -69,6 +71,7 @@ class MapLibreViewModel @Inject constructor(
     init {
         loadOfflineRegions()
         checkForIncompleteDownloads()
+        loadFields()
         registerBroadcastReceiver()
     }
 
@@ -108,7 +111,44 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.ToggleFabExpand -> {
                 state = state.copy(isFabExpanded = !state.isFabExpanded)
             }
+            MapLibreAction.LoadFields -> loadFields()
+            MapLibreAction.ToggleFieldsVisibility -> {
+                state = state.copy(showFields = !state.showFields)
+            }
             else -> Unit
+        }
+    }
+
+    private fun loadFields() {
+        state = state.copy(fieldsState = UiState.Loading)
+
+        viewModelScope.launch {
+            try {
+                val result = fieldsRepository.getFieldsList()
+                when (result) {
+                    is ApiResult.Success -> {
+                        Log.d(TAG, "Fields loaded successfully: ${result.data.size} fields")
+                        state = state.copy(fieldsState = UiState.Success(result.data))
+                    }
+                    is ApiResult.Error -> {
+                        Log.e(TAG, "Error loading fields: ${result.text}")
+                        state = state.copy(
+                            fieldsState = UiState.Error(
+                                title = "Ошибка загрузки полей",
+                                text = result.text
+                            )
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception loading fields: ${e.message}")
+                state = state.copy(
+                    fieldsState = UiState.Error(
+                        title = "Ошибка загрузки полей",
+                        text = e.message ?: "Неизвестная ошибка"
+                    )
+                )
+            }
         }
     }
 
