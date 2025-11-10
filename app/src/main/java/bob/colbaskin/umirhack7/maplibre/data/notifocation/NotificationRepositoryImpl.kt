@@ -48,12 +48,12 @@ class NotificationRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun showDownloadError(regionName: String, errorDescription: String) {
+    override suspend fun showDownloadError(regionName: String, error: String) {
         withContext(Dispatchers.IO) {
             val intent = Intent(context, MapDownloadService::class.java).apply {
                 action = MapDownloadService.ACTION_ERROR
                 putExtra(MapDownloadService.EXTRA_REGION_NAME, regionName)
-                putExtra(MapDownloadService.EXTRA_ERROR_DESCRIPTION, errorDescription)
+                putExtra(MapDownloadService.EXTRA_ERROR_DESCRIPTION, error)
             }
             context.startService(intent)
         }
@@ -67,6 +67,4 @@ class NotificationRepositoryImpl @Inject constructor(
             context.startService(intent)
         }
     }
-
-    override suspend fun requestNotificationPermission() {}
 }

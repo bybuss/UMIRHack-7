@@ -6,5 +6,4 @@ interface NotificationRepository {
     suspend fun completeDownload(regionName: String)
     suspend fun showDownloadError(regionName: String, error: String)
     suspend fun cancelDownloadNotification()
-    suspend fun requestNotificationPermission()
 }
