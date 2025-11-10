@@ -210,6 +210,7 @@ fun MainMapScreen(
     if (isLoading) {
         LoadingScreen()
     } else {
+
         Scaffold (
             modifier = Modifier.fillMaxSize(),
             floatingActionButton = {
@@ -249,6 +250,7 @@ fun MainMapScreen(
             }
         }
     }
+
 }
 
 @Composable
