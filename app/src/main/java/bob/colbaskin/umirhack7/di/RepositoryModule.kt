@@ -12,12 +12,15 @@ import bob.colbaskin.umirhack7.common.user_prefs.data.UserPreferencesRepositoryI
 import bob.colbaskin.umirhack7.common.user_prefs.data.datastore.UserDataStore
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import bob.colbaskin.umirhack7.di.token.TokenManager
-import bob.colbaskin.umirhack7.maplibre.data.LocationRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.data.location.LocationRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.OfflineMapRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.notifocation.NotificationRepositoryImpl
-import bob.colbaskin.umirhack7.maplibre.domain.LocationRepository
+import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
+import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsService
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
 import dagger.Module
@@ -50,10 +53,12 @@ object RepositoryModule {
     fun provideAuthRepository(
         authApi: AuthApiService,
         userPreferences: UserPreferencesRepository,
+        tokenManager: TokenManager
     ): AuthRepository {
         return AuthRepositoryImpl(
             authApi = authApi,
-            userPreferences = userPreferences
+            userPreferences = userPreferences,
+            tokenManager = tokenManager
         )
     }
 
@@ -115,5 +120,17 @@ object RepositoryModule {
     @Singleton
     fun provideNotificationRepository(@ApplicationContext context: Context): NotificationRepository {
         return NotificationRepositoryImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFieldsService(retrofit: Retrofit): FieldsService {
+        return retrofit.create(FieldsService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFieldsRepository(fieldsApi: FieldsService): FieldsRepository {
+        return FieldsRepositoryImpl(fieldsApi)
     }
 }

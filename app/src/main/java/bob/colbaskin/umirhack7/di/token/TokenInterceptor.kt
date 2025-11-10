@@ -17,6 +17,10 @@ class TokenInterceptor @Inject constructor(
         Log.d(TAG, "Request to: ${request.url}")
         Log.d(TAG, "Headers: ${request.headers}")
 
+        if (request.url.encodedPath == "/api/auth/refresh") {
+            return chain.proceed(request)
+        }
+
         return if (!accessToken.isNullOrEmpty()) {
             Log.d(TAG, "Adding access token to headers")
             val authRequest = request.newBuilder()

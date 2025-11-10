@@ -9,6 +9,7 @@ import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.AuthConfig
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import bob.colbaskin.umirhack7.common.utils.safeApiCall
+import bob.colbaskin.umirhack7.di.token.TokenManager
 import jakarta.inject.Inject
 
 private const val TAG = "Auth"
@@ -16,14 +17,13 @@ private const val TAG = "Auth"
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApiService,
     private val userPreferences: UserPreferencesRepository,
+    private val tokenManager: TokenManager
 ): AuthRepository {
     override suspend fun login(
         username: String,
         password: String
     ): ApiResult<Unit> {
         Log.d(TAG, "Attempting login for username: $username")
-        //FIXME: deleted after server is online
-        userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
         return safeApiCall<TokenDTO, Unit>(
             apiCall = {
                 authApi.login(
@@ -36,6 +36,10 @@ class AuthRepositoryImpl @Inject constructor(
             successHandler = { response ->
                 Log.d(TAG, "Login successful. Saving Authenticated status")
                 userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
+                tokenManager.saveTokens(
+                    accessToken = response.accessToken,
+                    refreshToken = response.refreshToken
+                )
                 response
             }
         )

@@ -7,6 +7,7 @@ import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenRepository
 import bob.colbaskin.umirhack7.di.token.TokenAuthenticator
 import bob.colbaskin.umirhack7.di.token.TokenInterceptor
 import bob.colbaskin.umirhack7.di.token.TokenManager
+import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
 import com.franmontiel.persistentcookiejar.PersistentCookieJar
 import com.franmontiel.persistentcookiejar.cache.SetCookieCache
 import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor
@@ -18,6 +19,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import jakarta.inject.Named
 import jakarta.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -43,15 +47,24 @@ object RemoteModule {
         return TokenInterceptor(tokenManager)
     }
 
+    @Singleton
+    @Provides
+    fun provideApplicationScope(): CoroutineScope
+        = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     @Provides
     @Singleton
     fun provideTokenAuthenticator(
         tokenManager: TokenManager,
-        refreshTokenRepository: RefreshTokenRepository
+        profileRepository: ProfileRepository,
+        refreshTokenRepository: RefreshTokenRepository,
+        scope: CoroutineScope
     ): TokenAuthenticator {
         return TokenAuthenticator(
             refreshTokenRepository = refreshTokenRepository,
-            tokenManager = tokenManager
+            tokenManager = tokenManager,
+            profileRepository = profileRepository,
+            scope = scope
         )
     }
 
@@ -94,6 +107,7 @@ object RemoteModule {
     ): Retrofit {
         val jsonConfig = Json {
             ignoreUnknownKeys = true
+            explicitNulls = false
         }
 
         return Retrofit.Builder()
