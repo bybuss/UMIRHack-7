@@ -446,16 +446,6 @@ fun FieldInfoCard(field: Field, onClose: () -> Unit) {
 
             Text(text = "Площадь: ${"%.2f".format(field.area / 10000)} га")
             Text(text = "Количество зон: ${field.zones.size}")
-//            Row (verticalAlignment = Alignment.CenterVertically) {
-//                Text(text = "Цвет:")
-//                Spacer(modifier = Modifier.width(8.dp))
-//                Box(
-//                    modifier = Modifier
-//                        .size(10.dp)
-//                        .clip(CircleShape)
-//                        .background(Color(field.color.toColorInt()))
-//                )
-//            }
 
             if (field.zones.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
