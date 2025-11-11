@@ -62,6 +62,11 @@ ramaniMaplibre = "0.9.2"
 accompanistPermissions = "0.37.3"
 kotlinxCoroutinesPlayServices = "1.10.2"
 
+# Room
+roomRuntime = "2.7.1"
+roomCompiler = "2.7.1"
+roomPaging = "2.7.1"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -130,6 +135,12 @@ maplibre-composeMaterial3 = { module = "org.maplibre.compose:maplibre-compose-ma
 # Permissions
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+
+# Room
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomRuntime" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomPaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

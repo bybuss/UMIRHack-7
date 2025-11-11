@@ -143,4 +143,10 @@ dependencies {
     // Permissions
     implementation(libs.accompanist.permissions)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.paging)
+    implementation(libs.androidx.room.ktx)
 }
