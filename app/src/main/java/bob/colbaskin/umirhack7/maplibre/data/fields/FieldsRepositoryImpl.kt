@@ -6,8 +6,8 @@ import bob.colbaskin.umirhack7.common.utils.safeApiCall
 import bob.colbaskin.umirhack7.maplibre.data.models.FieldDTO
 import bob.colbaskin.umirhack7.maplibre.data.models.toDomain
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
-import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
-import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsService
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsService
 import javax.inject.Inject
 
 private const val TAG = "MapLibre"

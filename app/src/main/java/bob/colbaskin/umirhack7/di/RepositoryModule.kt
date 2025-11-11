@@ -19,8 +19,8 @@ import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.maplibre.data.fields.FieldsRepositoryImpl
-import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
-import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsService
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsService
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
 import dagger.Module

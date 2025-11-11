@@ -1,4 +1,4 @@
-package bob.colbaskin.umirhack7.maplibre.presentation.fields
+package bob.colbaskin.umirhack7.maplibre.domain.fields
 
 import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field

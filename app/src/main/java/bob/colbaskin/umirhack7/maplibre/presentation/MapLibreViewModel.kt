@@ -20,7 +20,7 @@ import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
-import bob.colbaskin.umirhack7.maplibre.presentation.fields.FieldsRepository
+import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.BOUNDS_PADDING
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MAX_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.DEFAULT_MIN_ZOOM
