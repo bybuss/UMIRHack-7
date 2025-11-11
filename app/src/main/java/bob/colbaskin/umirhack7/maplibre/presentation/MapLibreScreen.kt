@@ -1,7 +1,5 @@
 package bob.colbaskin.umirhack7.maplibre.presentation
 
-import android.Manifest
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -23,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -57,7 +54,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -83,17 +79,11 @@ import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.LOCATION_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.TARGET_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
-import bob.colbaskin.umirhack7.maplibre.utils.rememberNotificationPermissionState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
-import kotlinx.coroutines.delay
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.Style
 import org.maplibre.android.offline.OfflineRegion
 import org.ramani.compose.CameraPosition
-import org.ramani.compose.CircleWithItem
 import org.ramani.compose.MapLibre
 import org.ramani.compose.Polygon
 
