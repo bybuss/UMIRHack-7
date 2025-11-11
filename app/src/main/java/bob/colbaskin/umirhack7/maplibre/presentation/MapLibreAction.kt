@@ -16,4 +16,5 @@ sealed interface MapLibreAction {
     data object ToggleFieldsVisibility : MapLibreAction
     data class SelectField(val field: Field) : MapLibreAction
     data object ClearSelectedField : MapLibreAction
+    data class FieldClicked(val field: Field) : MapLibreAction
 }

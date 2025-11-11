@@ -1,5 +1,6 @@
-package bob.colbaskin.umirhack7.maplibre.presentation.location
+package bob.colbaskin.umirhack7.maplibre.utils
 
+import android.Manifest
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -28,7 +29,7 @@ interface LocationPermissionState {
 @Composable
 fun rememberLocationPermissionState(): LocationPermissionState {
     val permissionState = rememberPermissionState(
-        android.Manifest.permission.ACCESS_FINE_LOCATION
+        Manifest.permission.ACCESS_FINE_LOCATION
     )
     return remember(permissionState) {
         AndroidLocationPermissionState(permissionState)

@@ -127,11 +127,17 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.ClearSelectedField -> {
                 state = state.copy(selectedField = null, cameraTarget = null)
             }
-            else -> Unit
+            is MapLibreAction.FieldClicked -> {
+                val fieldCenter = calculateFieldCenter(action.field)
+                state = state.copy(
+                    selectedField = action.field,
+                    cameraTarget = fieldCenter
+                )
+            }
         }
     }
 
-    private fun calculateFieldCenter(field: Field): LatLng {
+    fun calculateFieldCenter(field: Field): LatLng {
         val vertices = field.geometry.toLatLngList()
         if (vertices.isEmpty()) return LatLng(0.0, 0.0)
 

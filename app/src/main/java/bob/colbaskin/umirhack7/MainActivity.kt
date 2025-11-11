@@ -18,6 +18,7 @@ import bob.colbaskin.umirhack7.common.MainViewModel
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.theme.UMIRHack7Theme
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.UserPreferences
+import bob.colbaskin.umirhack7.maplibre.utils.RequestNotificationPermission
 import bob.colbaskin.umirhack7.navigation.AppNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.onEach
@@ -46,6 +47,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UMIRHack7Theme {
+                RequestNotificationPermission()
+
                 val isDarkTheme = isSystemInDarkTheme()
                 val insetsController = WindowInsetsControllerCompat(window, window.decorView)
 

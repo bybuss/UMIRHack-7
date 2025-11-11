@@ -9,6 +9,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -53,36 +57,43 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
 import androidx.hilt.navigation.compose.hiltViewModel
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.domain.models.LocationState
-import bob.colbaskin.umirhack7.maplibre.presentation.location.LocationPermissionState
-import bob.colbaskin.umirhack7.maplibre.presentation.location.rememberLocationPermissionState
+import bob.colbaskin.umirhack7.maplibre.utils.LocationPermissionState
+import bob.colbaskin.umirhack7.maplibre.utils.rememberLocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.LOCATION_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.TARGET_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.getReadableInfo
+import bob.colbaskin.umirhack7.maplibre.utils.rememberNotificationPermissionState
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.accompanist.permissions.shouldShowRationale
+import kotlinx.coroutines.delay
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.Style
 import org.maplibre.android.offline.OfflineRegion
 import org.ramani.compose.CameraPosition
+import org.ramani.compose.CircleWithItem
 import org.ramani.compose.MapLibre
 import org.ramani.compose.Polygon
 
@@ -94,25 +105,17 @@ fun MainScreenRoot(
     val state = viewModel.state
     val context = LocalContext.current
     val locationPermissionState = rememberLocationPermissionState()
-    val notificationPermissionState = rememberPermissionState(
-        Manifest.permission.POST_NOTIFICATIONS
-    )
+
+    LaunchedEffect(Unit) {
+        viewModel.onAction(MapLibreAction.LoadFields)
+        if (!locationPermissionState.hasPermission) {
+            locationPermissionState.requestPermission()
+        }
+    }
 
     LaunchedEffect(locationPermissionState.hasPermission) {
         if (locationPermissionState.hasPermission) {
             viewModel.onAction(MapLibreAction.GetCurrentLocation)
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (!locationPermissionState.hasPermission) {
-            locationPermissionState.requestPermission()
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (!notificationPermissionState.status.isGranted) {
-                notificationPermissionState.launchPermissionRequest()
-            }
         }
     }
 
@@ -127,26 +130,11 @@ fun MainScreenRoot(
         }
     }
 
-    LaunchedEffect(state.downloadState) {
-        if (state.downloadState is UiState.Error) {
-            Toast.makeText(
-                context,
-                "${state.downloadState.title}: ${state.downloadState.text}",
-                Toast.LENGTH_LONG
-            ).show()
-            viewModel.onAction(MapLibreAction.ClearError)
-        }
-    }
-
     LaunchedEffect(state.locationState.error) {
         state.locationState.error?.let { error ->
             Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
             viewModel.onAction(MapLibreAction.ClearError)
         }
-    }
-
-    LaunchedEffect(Unit) {
-        viewModel.onAction(MapLibreAction.LoadFields)
     }
 
     MainScreen(
@@ -239,39 +227,38 @@ fun MainMapScreen(
     locationPermissionState: LocationPermissionState,
     onAction: (MapLibreAction) -> Unit
 ) {
+    val cameraPosition = remember { mutableStateOf(
+        CameraPosition(
+            target = locationState.currentLocation?.let {
+                LatLng(it.latitude, it.longitude)
+            } ?: LatLng(47.1352, 39.4323),
+            zoom = LOCATION_ZOOM
+        )
+    )}
+
+    LaunchedEffect(locationState.currentLocation) {
+        locationState.currentLocation?.let { location ->
+            cameraPosition.value = CameraPosition(
+                target = LatLng(location.latitude, location.longitude),
+                zoom = LOCATION_ZOOM
+            )
+        }
+    }
+
+    LaunchedEffect(state.cameraTarget) {
+        state.cameraTarget?.let { target ->
+            cameraPosition.value = CameraPosition(
+                target = target,
+                zoom = TARGET_ZOOM,
+                animationDurationMs = 1200
+
+            )
+        }
+    }
+
     if (isLoading) {
         LoadingScreen()
     } else {
-
-        val cameraPosition = remember { mutableStateOf(
-            CameraPosition(
-                target = locationState.currentLocation?.let {
-                    LatLng(it.latitude, it.longitude)
-                } ?: LatLng(47.1352, 39.4323),
-                zoom = LOCATION_ZOOM
-            )
-        )}
-
-        LaunchedEffect(locationState.currentLocation) {
-            locationState.currentLocation?.let { location ->
-                cameraPosition.value = CameraPosition(
-                    target = LatLng(location.latitude, location.longitude),
-                    zoom = LOCATION_ZOOM
-                )
-            }
-        }
-
-        LaunchedEffect(state.cameraTarget) {
-            state.cameraTarget?.let { target ->
-                cameraPosition.value = CameraPosition(
-                    target = target,
-                    zoom = TARGET_ZOOM,
-                    animationDurationMs = 1200
-
-                )
-            }
-        }
-
         Scaffold (
             modifier = Modifier.fillMaxSize(),
             floatingActionButton = {
@@ -313,10 +300,14 @@ fun MainMapScreen(
                                     LocalContext.current,
                                     fieldsState.title,
                                     Toast.LENGTH_SHORT
-                                )
+                                ).show()
                             }
                             is UiState.Loading -> {
-                                LoadingScreen()
+                                Toast.makeText(
+                                    LocalContext.current,
+                                    "ЗАГРУЗКА",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                     }
@@ -442,11 +433,20 @@ fun FieldInfoCard(field: Field, onClose: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = field.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
+                Row (verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clip(CircleShape)
+                            .background(Color(field.color.toColorInt()))
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = field.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
                 IconButton(onClick = onClose) {
                     Icon(Icons.Filled.Close, contentDescription = "Закрыть")
                 }
@@ -456,7 +456,16 @@ fun FieldInfoCard(field: Field, onClose: () -> Unit) {
 
             Text(text = "Площадь: ${"%.2f".format(field.area / 10000)} га")
             Text(text = "Количество зон: ${field.zones.size}")
-            Text(text = "Цвет: ${field.color}")
+//            Row (verticalAlignment = Alignment.CenterVertically) {
+//                Text(text = "Цвет:")
+//                Spacer(modifier = Modifier.width(8.dp))
+//                Box(
+//                    modifier = Modifier
+//                        .size(10.dp)
+//                        .clip(CircleShape)
+//                        .background(Color(field.color.toColorInt()))
+//                )
+//            }
 
             if (field.zones.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -466,10 +475,18 @@ fun FieldInfoCard(field: Field, onClose: () -> Unit) {
                     fontWeight = FontWeight.Bold
                 )
                 field.zones.forEach { zone ->
-                    Text(
-                        text = "• ${zone.name} (${"%.2f".format(zone.area / 10000)} га)",
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(10.dp)
+                                .clip(CircleShape)
+                                .background(Color(zone.color.toColorInt()))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "«${zone.name}» (${"%.2f".format(zone.area / 10000)} га)",
+                        )
+                    }
                 }
             }
         }
