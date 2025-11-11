@@ -2,9 +2,9 @@ package bob.colbaskin.umirhack7.navigation
 
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Calculate
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Screenshot
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class Destinations(
@@ -12,15 +12,15 @@ enum class Destinations(
     val label: String,
     val screen: Screens
 ) {
-    HOME(
-        icon = Icons.Default.Home,
-        label = "Home",
-        screen = Screens.Home
+    CALCULATOR(
+        icon = Icons.Default.Calculate,
+        label = "Сalculator",
+        screen = Screens.Calculator
     ),
-    SOME_SCREEN(
-        icon = Icons.Default.Screenshot,
-        label = "SomeScreen",
-        screen = Screens.SomeScreen
+    MAP(
+        icon = Icons.Default.Map,
+        label = "Map",
+        screen = Screens.Map
     ),
     PROFILE(
         icon = Icons.Default.Person,

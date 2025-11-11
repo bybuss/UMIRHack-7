@@ -55,9 +55,9 @@ fun NavGraphBuilder.mainGraph(
     snackbarHostState: SnackbarHostState
 ) {
     navigation<Graphs.Main>(
-        startDestination = Screens.Home
+        startDestination = Screens.Map
     ) {
-        animatedTransition<Screens.Home> {
+        animatedTransition<Screens.Calculator> {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -65,7 +65,7 @@ fun NavGraphBuilder.mainGraph(
                 Text("Home Screen")
             }
         }
-        animatedTransition<Screens.SomeScreen> {
+        animatedTransition<Screens.Map> {
             MainScreenRoot()
         }
         animatedTransition<Screens.Profile> {
