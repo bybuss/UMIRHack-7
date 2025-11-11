@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,13 +26,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NearbyError
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -292,13 +293,7 @@ fun MainMapScreen(
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                            is UiState.Loading -> {
-                                Toast.makeText(
-                                    LocalContext.current,
-                                    "ЗАГРУЗКА",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            is UiState.Loading -> {}
                         }
                     }
                 }
@@ -398,9 +393,12 @@ fun TopBarWithFields(
             }
             is UiState.Error -> {
                 Icon(
-                    imageVector = Icons.Filled.Error,
+                    imageVector = Icons.Filled.Replay,
                     contentDescription = "Ошибка загрузки полей",
-                    tint = Color.Red
+                    tint = Color.Red,
+                    modifier = Modifier.clickable(
+                        onClick = { onAction(MapLibreAction.LoadFields) }
+                    )
                 )
             }
         }
