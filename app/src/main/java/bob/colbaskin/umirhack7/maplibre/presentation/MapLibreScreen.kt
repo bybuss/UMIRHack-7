@@ -360,8 +360,18 @@ fun TopBarWithFields(
                             onClick = {
                                 onAction(MapLibreAction.ClearSelectedField)
                                 expanded = false
+                            },
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Replay,
+                                    contentDescription = "Повторить",
+                                    modifier = Modifier.clickable(
+                                        onClick = { onAction(MapLibreAction.LoadFields) }
+                                    )
+                                )
                             }
                         )
+
                         HorizontalDivider(modifier = Modifier.fillMaxWidth())
 
                         fieldsState.data.forEach { field ->
