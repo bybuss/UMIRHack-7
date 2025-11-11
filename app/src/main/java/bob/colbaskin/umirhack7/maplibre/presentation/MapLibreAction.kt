@@ -13,7 +13,6 @@ sealed interface MapLibreAction {
     data object ToggleFabExpand : MapLibreAction
     data object CloseFabMenu : MapLibreAction
     data object LoadFields : MapLibreAction
-    data object ForceSync : MapLibreAction
     data object ToggleFieldsVisibility : MapLibreAction
     data class SelectField(val field: Field) : MapLibreAction
     data object ClearSelectedField : MapLibreAction

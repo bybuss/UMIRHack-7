@@ -117,7 +117,6 @@ class MapLibreViewModel @Inject constructor(
                 state = state.copy(isFabExpanded = !state.isFabExpanded)
             }
             MapLibreAction.LoadFields -> syncFields()
-            MapLibreAction.ForceSync -> syncFields()
             MapLibreAction.ToggleFieldsVisibility -> {
                 state = state.copy(showFields = !state.showFields)
             }
@@ -203,39 +202,6 @@ class MapLibreViewModel @Inject constructor(
             }
         }
 
-    }
-
-    private fun loadFields() {
-        state = state.copy(fieldsState = UiState.Loading)
-
-        viewModelScope.launch {
-            try {
-                val result = fieldsRepository.getFieldsList()
-                when (result) {
-                    is ApiResult.Success -> {
-                        Log.d(TAG, "Fields loaded successfully: ${result.data.size} fields")
-                        state = state.copy(fieldsState = UiState.Success(result.data))
-                    }
-                    is ApiResult.Error -> {
-                        Log.e(TAG, "Error loading fields: ${result.text}")
-                        state = state.copy(
-                            fieldsState = UiState.Error(
-                                title = "Ошибка загрузки полей",
-                                text = result.text
-                            )
-                        )
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Exception loading fields: ${e.message}")
-                state = state.copy(
-                    fieldsState = UiState.Error(
-                        title = "Ошибка загрузки полей",
-                        text = e.message ?: "Неизвестная ошибка"
-                    )
-                )
-            }
-        }
     }
 
     private fun loadOfflineRegions() {
