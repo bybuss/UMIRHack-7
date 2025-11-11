@@ -19,6 +19,7 @@ import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.maplibre.data.fields.FieldsRepositoryImpl
+import bob.colbaskin.umirhack7.maplibre.data.local.FieldsDatabase
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsService
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
@@ -130,7 +131,13 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideFieldsRepository(fieldsApi: FieldsService): FieldsRepository {
-        return FieldsRepositoryImpl(fieldsApi)
+    fun provideFieldsRepository(
+        fieldsApi: FieldsService,
+        database: FieldsDatabase
+    ): FieldsRepository {
+        return FieldsRepositoryImpl(
+            fieldsApi = fieldsApi,
+            database = database
+        )
     }
 }

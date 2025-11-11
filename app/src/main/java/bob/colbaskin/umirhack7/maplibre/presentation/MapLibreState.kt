@@ -17,8 +17,10 @@ data class MapLibreState(
     val suggestedRegionName: String? = null,
     val isFabExpanded: Boolean = false,
     val currentDownloadRegionId: Long? = null,
-    val fieldsState: UiState<List<Field>> = UiState.Loading,
     val showFields: Boolean = true,
     val selectedField: Field? = null,
-    val cameraTarget: LatLng? = null
+    val cameraTarget: LatLng? = null,
+    val fieldsState: UiState<List<Field>> = UiState.Loading,
+    val syncState: UiState<Unit> = UiState.Loading,
+    val isSyncing: Boolean = false
 )

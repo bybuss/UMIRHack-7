@@ -16,6 +16,7 @@ import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.takeIfSuccess
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.data.notifocation.MapDownloadService
+import bob.colbaskin.umirhack7.maplibre.data.sync.SyncManager
 import bob.colbaskin.umirhack7.maplibre.domain.location.LocationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
@@ -43,6 +44,7 @@ class MapLibreViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val notificationRepository: NotificationRepository,
     private val fieldsRepository: FieldsRepository,
+    private val syncManager: SyncManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -73,7 +75,8 @@ class MapLibreViewModel @Inject constructor(
     init {
         loadOfflineRegions()
         checkForIncompleteDownloads()
-        loadFields()
+        setupFieldsStream()
+        setupSync()
         registerBroadcastReceiver()
     }
 
@@ -113,7 +116,8 @@ class MapLibreViewModel @Inject constructor(
             MapLibreAction.ToggleFabExpand -> {
                 state = state.copy(isFabExpanded = !state.isFabExpanded)
             }
-            MapLibreAction.LoadFields -> loadFields()
+            MapLibreAction.LoadFields -> syncFields()
+            MapLibreAction.ForceSync -> syncFields()
             MapLibreAction.ToggleFieldsVisibility -> {
                 state = state.copy(showFields = !state.showFields)
             }
@@ -157,6 +161,48 @@ class MapLibreViewModel @Inject constructor(
             (minLat + maxLat) / 2,
             (minLon + maxLon) / 2
         )
+    }
+
+    private fun setupFieldsStream() {
+        viewModelScope.launch {
+            fieldsRepository.getFieldsStream().collect { fields ->
+                state = state.copy(fieldsState = UiState.Success(fields))
+            }
+        }
+    }
+
+    private fun setupSync() {
+        viewModelScope.launch {
+            syncFields()
+        }
+        syncManager.scheduleSync()
+    }
+
+    private fun syncFields() {
+        state = state.copy(isSyncing = true, syncState = UiState.Loading)
+
+        viewModelScope.launch {
+            when (val result = fieldsRepository.syncFields()) {
+                is ApiResult.Success -> {
+                    state = state.copy(
+                        isSyncing = false,
+                        syncState = UiState.Success(Unit)
+                    )
+                    Log.d(TAG, "Синхронизация завершена успешно")
+                }
+                is ApiResult.Error -> {
+                    state = state.copy(
+                        isSyncing = false,
+                        syncState = UiState.Error(
+                            title = "Ошибка синхронизации",
+                            text = result.text
+                        )
+                    )
+                    Log.e(TAG, "Ошибка синхронизации: ${result.text}")
+                }
+            }
+        }
+
     }
 
     private fun loadFields() {
