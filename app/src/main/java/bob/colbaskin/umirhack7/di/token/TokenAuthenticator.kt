@@ -50,9 +50,9 @@ class TokenAuthenticator @Inject constructor(
                     }
                     is ApiResult.Error -> {
                         Log.d(TAG, "Token refresh failed with error: ${refreshResult.text}")
-//                        scope.launch {
-//                            profileRepository.logout()
-//                        }
+                        scope.launch {
+                            profileRepository.logout()
+                        }
                     }
                 }
             } else {
