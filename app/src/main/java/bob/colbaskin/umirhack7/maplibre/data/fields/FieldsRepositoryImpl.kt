@@ -1,4 +1,4 @@
-package bob.colbaskin.umirhack7.maplibre.domain.fields
+package bob.colbaskin.umirhack7.maplibre.data.fields
 
 import android.util.Log
 import bob.colbaskin.umirhack7.common.ApiResult
