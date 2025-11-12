@@ -124,6 +124,8 @@ class MapLibreViewModel @Inject constructor(
                 val fieldCenter = calculateFieldCenter(action.field)
                 state = state.copy(
                     selectedField = action.field,
+                    searchQuery = action.field.name,
+                    filteredFields = emptyList(),
                     cameraTarget = fieldCenter
                 )
             }
@@ -134,6 +136,50 @@ class MapLibreViewModel @Inject constructor(
                 val fieldCenter = calculateFieldCenter(action.field)
                 state = state.copy(
                     selectedField = action.field,
+                    cameraTarget = fieldCenter
+                )
+            }
+            is MapLibreAction.UpdateSearchQuery -> {
+                val newQuery = action.query
+                state = state.copy(searchQuery = newQuery)
+
+                if (newQuery.isNotBlank()) {
+                    val allFields = (state.fieldsState as? UiState.Success)?.data ?: emptyList()
+                    val filtered = allFields.filter { field ->
+                        field.name.contains(newQuery, ignoreCase = true)
+                    }
+                    state = state.copy(filteredFields = filtered)
+                } else {
+                    state = state.copy(filteredFields = emptyList())
+                }
+            }
+            is MapLibreAction.PerformSearch -> performSearch()
+            MapLibreAction.ClearSearch -> {
+                state = state.copy(
+                    searchQuery = "",
+                    filteredFields = emptyList(),
+                    selectedField = null
+                )
+            }
+        }
+    }
+
+    private fun performSearch() {
+        val currentQuery = state.searchQuery.trim()
+        if (currentQuery.isNotBlank()) {
+            val allFields = (state.fieldsState as? UiState.Success)?.data ?: emptyList()
+            val matchingField = allFields.find { field ->
+                field.name.equals(currentQuery, ignoreCase = true)
+            } ?: allFields.find { field ->
+                field.name.contains(currentQuery, ignoreCase = true)
+            }
+
+            if (matchingField != null) {
+                val fieldCenter = calculateFieldCenter(matchingField)
+                state = state.copy(
+                    selectedField = matchingField,
+                    searchQuery = matchingField.name,
+                    filteredFields = emptyList(),
                     cameraTarget = fieldCenter
                 )
             }

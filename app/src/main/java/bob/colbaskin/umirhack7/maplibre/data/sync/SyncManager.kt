@@ -17,7 +17,7 @@ class SyncManager @Inject constructor(
     companion object {
         private const val SYNC_WORK_NAME = "fields_sync"
         private const val TAG = "MapLibre"
-        private const val SYNC_HOURS: Long = 4
+        private const val SYNC_HOURS: Long = 1
     }
 
     fun scheduleSync() {
