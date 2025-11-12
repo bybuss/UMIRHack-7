@@ -63,7 +63,7 @@ fun SplashScreen() {
     val screenCenter: Dp = with (density) { (screenWidthPx / 2).toDp() }
     val screenEnd: Dp = with (density) { screenWidthPx.toDp() }
 
-    val logoPainter = painterResource(R.drawable.workmate_logo)
+    val logoPainter = painterResource(R.drawable.agrohub_logo)
     val logoHalfWidth: Dp = with (density) { logoPainter.intrinsicSize.width.toDp() / 2 }
     val logoScale: Float = calculateImageScaleToFullscreen(
         image = logoPainter,
@@ -110,7 +110,7 @@ fun SplashScreen() {
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
-            painter = painterResource(R.drawable.workmate_logo),
+            painter = painterResource(R.drawable.agrohub_logo),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
