@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
@@ -26,6 +27,7 @@ import bob.colbaskin.umirhack7.maplibre.utils.rememberLocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.LOCATION_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.TARGET_ZOOM
+import bob.colbaskin.umirhack7.navigation.Screens
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.Style
@@ -36,6 +38,7 @@ import org.ramani.compose.Polygon
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MapLibreScreenRoot(
+    navController: NavHostController,
     viewModel: MapLibreViewModel = hiltViewModel()
 ) {
     val state = viewModel.state
@@ -75,7 +78,17 @@ fun MapLibreScreenRoot(
 
     MapLibreScreen(
         state = state,
-        onAction = viewModel::onAction
+        onAction = { action ->
+            when (action) {
+                is MapLibreAction.NavigateToFieldDetails -> {
+                    navController.navigate(
+                        Screens.SoilAnalyze(id = action.id)
+                    )
+                }
+                else -> Unit
+            }
+            viewModel.onAction(action)
+        }
     )
 }
 

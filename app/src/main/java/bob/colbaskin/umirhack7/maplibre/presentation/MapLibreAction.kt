@@ -20,4 +20,5 @@ sealed interface MapLibreAction {
     data class UpdateSearchQuery(val query: String) : MapLibreAction
     data object PerformSearch : MapLibreAction
     data object ClearSearch : MapLibreAction
+    data class NavigateToFieldDetails(val id: Int): MapLibreAction
 }

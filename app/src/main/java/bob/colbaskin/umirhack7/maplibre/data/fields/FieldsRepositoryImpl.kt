@@ -96,6 +96,82 @@ class FieldsRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getFieldStream(fieldId: Int): Flow<Field?> {
+        Log.d(TAG, "getFieldStream: Starting field stream for fieldId: $fieldId")
+        return fieldDao.getFieldWithZonesStream(fieldId).map { fieldWithZones ->
+            if (fieldWithZones != null) {
+                Log.d(TAG, "getFieldStream: Found field ${fieldWithZones.field.name} with ${fieldWithZones.zones.size} zones")
+                fieldWithZones.field.toDomain(
+                    zones = fieldWithZones.zones.map { it.toDomain() }
+                )
+            } else {
+                Log.d(TAG, "getFieldStream: Field with id $fieldId not found in database")
+                null
+            }
+        }
+    }
+
+    override suspend fun syncField(fieldId: Int): ApiResult<Unit> {
+        Log.d(TAG, "syncField: Starting sync for fieldId: $fieldId")
+        return safeApiCall(
+            apiCall = {
+                Log.d(TAG, "syncField: Fetching field detail from API...")
+                val apiData = fieldsApi.getFieldDetail(fieldId)
+                Log.d(TAG, "syncField: Get ${apiData.size} fields from detail API")
+                apiData
+            },
+            successHandler = { fieldDTOs ->
+                if (fieldDTOs.isNotEmpty()) {
+                    val fieldDTO = fieldDTOs.first()
+                    Log.d(TAG, "syncField: Processing field ${fieldDTO.id} for DB storage")
+                    saveFieldToDatabase(fieldDTO)
+                    Log.d(TAG, "syncField: Field sync completed successfully")
+                } else {
+                    Log.w(TAG, "syncField: No field data received for fieldId: $fieldId")
+                }
+                ApiResult.Success(Unit)
+            }
+        )
+    }
+
+    override suspend fun getFieldFromDatabase(fieldId: Int): ApiResult<Field?> {
+        Log.d(TAG, "getFieldFromDatabase: Getting field $fieldId from database...")
+        return try {
+            val fieldWithZones = fieldDao.getFieldWithZonesStream(fieldId).first()
+            if (fieldWithZones != null) {
+                Log.d(TAG, "getFieldFromDatabase: Found field ${fieldWithZones.field.name} with ${fieldWithZones.zones.size} zones")
+                ApiResult.Success(
+                    fieldWithZones.field.toDomain(
+                        zones = fieldWithZones.zones.map { it.toDomain() }
+                    )
+                )
+            } else {
+                Log.d(TAG, "getFieldFromDatabase: Field $fieldId not found in database")
+                ApiResult.Success(null)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "getFieldFromDatabase: Error getting field from database: ${e.message}", e)
+            ApiResult.Error(title = "${e.cause}", text = "Ошибка получения поля из базы: ${e.message}")
+        }
+    }
+
+    private suspend fun saveFieldToDatabase(fieldDTO: FieldDTO) {
+        Log.d(TAG, "saveFieldToDatabase: Processing field ${fieldDTO.id}")
+
+        val fieldEntity = fieldDTO.toEntity()
+        val zoneEntities = fieldDTO.zones.map { it.toEntity(fieldDTO.id) }
+
+        Log.d(TAG, "saveFieldToDatabase: Prepared field entity and ${zoneEntities.size} zone entities")
+
+        database.withTransaction {
+            fieldDao.insertField(fieldEntity)
+            zoneDao.deleteZonesForField(fieldDTO.id)
+            zoneDao.insertZones(zoneEntities)
+        }
+
+        Log.d(TAG, "saveFieldToDatabase: Saved field ${fieldDTO.id} with ${zoneEntities.size} zones to database")
+    }
+
     companion object {
         //FIXME: delete
         private val mockFields = listOf(

@@ -81,7 +81,7 @@ fun FieldInfoCard(
             Text(text = "Количество зон: ${field.zones.size}")
 
             Button(
-                onClick = { onAction(MapLibreAction.ClearSelectedField) },
+                onClick = { onAction(MapLibreAction.NavigateToFieldDetails(field.id)) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

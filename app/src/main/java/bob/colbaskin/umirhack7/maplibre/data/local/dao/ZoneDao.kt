@@ -12,9 +12,15 @@ interface ZoneDao {
     @Query("SELECT * FROM zones WHERE fieldId = :fieldId")
     fun getZonesForFieldStream(fieldId: Int): Flow<List<ZoneEntity>>
 
+    @Query("SELECT * FROM zones WHERE fieldId = :fieldId")
+    suspend fun getZonesForField(fieldId: Int): List<ZoneEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertZones(zones: List<ZoneEntity>)
 
     @Query("DELETE FROM zones")
     suspend fun clearZones()
+
+    @Query("DELETE FROM zones WHERE fieldId = :fieldId")
+    suspend fun deleteZonesForField(fieldId: Int)
 }

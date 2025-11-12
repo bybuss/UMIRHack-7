@@ -1,11 +1,6 @@
 package bob.colbaskin.umirhack7.navigation.graphs
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.navigation
@@ -17,6 +12,7 @@ import bob.colbaskin.umirhack7.navigation.animatedTransition
 import bob.colbaskin.umirhack7.onboarding.presentation.IntroductionScreen
 import bob.colbaskin.umirhack7.onboarding.presentation.WelcomeScreen
 import bob.colbaskin.umirhack7.profile.presentation.ProfileScreenRoot
+import bob.colbaskin.umirhack7.soil_analyze.presentation.SoilAnalyzeScreenRoot
 
 
 fun NavGraphBuilder.onboardingGraph(
@@ -57,19 +53,23 @@ fun NavGraphBuilder.mainGraph(
     navigation<Graphs.Main>(
         startDestination = Screens.Map
     ) {
-        animatedTransition<Screens.Calculator> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Home Screen")
-            }
-        }
         animatedTransition<Screens.Map> {
-            MapLibreScreenRoot()
+            MapLibreScreenRoot(navController)
         }
         animatedTransition<Screens.Profile> {
             ProfileScreenRoot()
+        }
+    }
+}
+
+fun NavGraphBuilder.detailedGraph(
+    navController: NavHostController,
+) {
+    navigation<Graphs.Detailed>(
+        startDestination = Screens.SoilAnalyze(id = 1)
+    ) {
+        animatedTransition<Screens.SoilAnalyze> {
+            SoilAnalyzeScreenRoot(navController)
         }
     }
 }

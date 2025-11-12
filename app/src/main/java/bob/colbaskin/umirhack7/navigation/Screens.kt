@@ -4,9 +4,6 @@ import kotlinx.serialization.Serializable
 
 interface Screens {
     @Serializable
-    data object Calculator: Screens
-
-    @Serializable
     data object Map: Screens
 
     @Serializable
@@ -20,4 +17,7 @@ interface Screens {
 
     @Serializable
     data object SignIn: Screens
+
+    @Serializable
+    data class SoilAnalyze(val id: Int): Screens
 }

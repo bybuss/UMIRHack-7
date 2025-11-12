@@ -161,6 +161,7 @@ class MapLibreViewModel @Inject constructor(
                     selectedField = null
                 )
             }
+            else -> Unit
         }
     }
 

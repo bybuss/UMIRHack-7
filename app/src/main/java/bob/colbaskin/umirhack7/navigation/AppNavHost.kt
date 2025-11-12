@@ -17,6 +17,7 @@ import bob.colbaskin.umirhack7.common.design_system.CustomSnackbarHost
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.AuthConfig
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.UserPreferences
 import bob.colbaskin.umirhack7.navigation.graphs.Graphs
+import bob.colbaskin.umirhack7.navigation.graphs.detailedGraph
 import bob.colbaskin.umirhack7.navigation.graphs.mainGraph
 import bob.colbaskin.umirhack7.navigation.graphs.onboardingGraph
 
@@ -57,6 +58,7 @@ fun AppNavHost(uiState: UiState.Success<UserPreferences>) {
                 snackbarHostState = snackbarHostState
             )
             mainGraph(navController, snackbarHostState)
+            detailedGraph(navController)
         }
     }
 }

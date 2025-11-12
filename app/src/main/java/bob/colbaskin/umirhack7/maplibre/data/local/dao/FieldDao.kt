@@ -18,9 +18,22 @@ interface FieldDao {
     @Query("SELECT * FROM fields")
     fun getFieldsWithZonesStream(): Flow<List<FieldWithZones>>
 
+    @Transaction
+    @Query("SELECT * FROM fields WHERE id = :fieldId")
+    fun getFieldWithZonesStream(fieldId: Int): Flow<FieldWithZones?>
+
+    @Query("SELECT * FROM fields WHERE id = :fieldId")
+    suspend fun getFieldById(fieldId: Int): FieldEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFields(fields: List<FieldEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertField(field: FieldEntity)
+
     @Query("DELETE FROM fields")
     suspend fun clearFields()
+
+    @Query("DELETE FROM fields WHERE id = :fieldId")
+    suspend fun deleteField(fieldId: Int)
 }
