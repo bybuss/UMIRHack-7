@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,7 +32,11 @@ import androidx.core.graphics.toColorInt
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 
 @Composable
-fun FieldInfoCard(field: Field, onClose: () -> Unit) {
+fun FieldInfoCard(
+    field: Field,
+    onClose: () -> Unit,
+    onMoreDetailsClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -70,27 +75,13 @@ fun FieldInfoCard(field: Field, onClose: () -> Unit) {
             Text(text = "Площадь: ${"%.2f".format(field.area / 10000)} га")
             Text(text = "Количество зон: ${field.zones.size}")
 
-            if (field.zones.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onMoreDetailsClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    text = "Зоны:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Подробнее"
                 )
-                field.zones.forEach { zone ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(Color(zone.color.toColorInt()))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "«${zone.name}» (${"%.2f".format(zone.area / 10000)} га)",
-                        )
-                    }
-                }
             }
         }
     }

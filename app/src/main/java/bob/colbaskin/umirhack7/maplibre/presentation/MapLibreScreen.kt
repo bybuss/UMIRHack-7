@@ -199,7 +199,8 @@ private fun MapContentScreen(
                 state.selectedField?.let { field ->
                     FieldInfoCard(
                         field = field,
-                        onClose = { onAction(MapLibreAction.ClearSelectedField) }
+                        onClose = { onAction(MapLibreAction.ClearSelectedField) },
+                        onMoreDetailsClick = {}
                     )
                 }
             }
