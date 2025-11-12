@@ -16,12 +16,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import bob.colbaskin.umirhack7.common.MainViewModel
 import bob.colbaskin.umirhack7.common.UiState
-import bob.colbaskin.umirhack7.common.design_system.theme.HackathonTemplateTheme
+import bob.colbaskin.umirhack7.common.design_system.theme.UMIRHack7Theme
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.UserPreferences
+import bob.colbaskin.umirhack7.maplibre.utils.RequestNotificationPermission
 import bob.colbaskin.umirhack7.navigation.AppNavHost
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.maplibre.android.MapLibre
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        MapLibre.getInstance(this)
 
         var uiState: UiState<UserPreferences> by mutableStateOf(UiState.Loading)
         lifecycleScope.launch {
@@ -43,7 +46,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            HackathonTemplateTheme {
+            UMIRHack7Theme {
+                RequestNotificationPermission()
+
                 val isDarkTheme = isSystemInDarkTheme()
                 val insetsController = WindowInsetsControllerCompat(window, window.decorView)
 

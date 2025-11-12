@@ -22,7 +22,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,7 +40,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
-import bob.colbaskin.umirhack7.navigation.Screens
 import bob.colbaskin.umirhack7.navigation.graphs.Graphs
 import kotlinx.coroutines.launch
 
@@ -73,7 +71,6 @@ fun SignInScreenRoot(
                         else -> {}
                     }
                 }
-                SignInAction.SignUp -> { navController.navigate(Screens.SignUp) }
                 else -> Unit
             }
             viewModel.onAction(action)
@@ -117,13 +114,14 @@ private fun SignInScreen(
                     )
                 }
             )
+
             Column {
                 OutlinedTextField(
-                    value = state.email,
-                    onValueChange = { onAction(SignInAction.UpdateEmail(it)) },
-                    label = { Text("Email") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    isError = !state.isEmailValid,
+                    value = state.username,
+                    onValueChange = { onAction(SignInAction.UpdateUserName(it)) },
+                    label = { Text("User Name") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    isError = !state.isNameValid,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
@@ -160,12 +158,6 @@ private fun SignInScreen(
                     } else {
                         Text("Sign In")
                     }
-                }
-                TextButton(
-                    onClick = { onAction(SignInAction.SignUp) },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Sign Up")
                 }
             }
         }

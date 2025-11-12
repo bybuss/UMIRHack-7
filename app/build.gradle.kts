@@ -133,4 +133,23 @@ dependencies {
 
     // Material Icons
     implementation(libs.androidx.material.icons.extended)
+
+    // MapLibre Compose
+    implementation(libs.maplibre.compose)
+    implementation(libs.maplibre.composeMaterial3)
+    implementation(libs.play.services.location)
+    implementation(libs.ramani.maplibre)
+
+    // Permissions
+    implementation(libs.accompanist.permissions)
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.paging)
+    implementation(libs.androidx.room.ktx)
+
+    // Compose Icons
+    implementation(libs.composeIcons.tablerIcons)
 }

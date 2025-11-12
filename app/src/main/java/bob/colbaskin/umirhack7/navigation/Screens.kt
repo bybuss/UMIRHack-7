@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 interface Screens {
     @Serializable
-    data object Home: Screens
+    data object Calculator: Screens
 
     @Serializable
-    data object SomeScreen: Screens
+    data object Map: Screens
 
     @Serializable
     data object Profile: Screens
@@ -20,7 +20,4 @@ interface Screens {
 
     @Serializable
     data object SignIn: Screens
-
-    @Serializable
-    data object SignUp: Screens
 }

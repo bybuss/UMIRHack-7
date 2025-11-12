@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import bob.colbaskin.umirhack7.R
 
 @Composable
-fun LoadingScreen(onError: () -> Unit) {
+fun LoadingScreen() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Lottie(lottieJson = R.raw.loading, speed = 3f)
     }
