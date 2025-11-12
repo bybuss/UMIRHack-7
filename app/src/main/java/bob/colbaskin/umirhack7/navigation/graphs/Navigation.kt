@@ -11,7 +11,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.navigation
 import bob.colbaskin.umirhack7.auth.presentation.sign_in.SignInScreenRoot
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.OnboardingConfig
-import bob.colbaskin.umirhack7.maplibre.presentation.MainScreenRoot
+import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreScreenRoot
 import bob.colbaskin.umirhack7.navigation.Screens
 import bob.colbaskin.umirhack7.navigation.animatedTransition
 import bob.colbaskin.umirhack7.onboarding.presentation.IntroductionScreen
@@ -66,7 +66,7 @@ fun NavGraphBuilder.mainGraph(
             }
         }
         animatedTransition<Screens.Map> {
-            MainScreenRoot()
+            MapLibreScreenRoot()
         }
         animatedTransition<Screens.Profile> {
             ProfileScreenRoot()
