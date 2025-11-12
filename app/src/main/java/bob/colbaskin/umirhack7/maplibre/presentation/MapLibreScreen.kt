@@ -21,7 +21,7 @@ import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.presentation.components.FieldInfoCard
-import bob.colbaskin.umirhack7.maplibre.presentation.components.TopBarWithFields
+import bob.colbaskin.umirhack7.maplibre.presentation.components.TopBarWithSearchAndFields
 import bob.colbaskin.umirhack7.maplibre.utils.rememberLocationPermissionState
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.LOCATION_ZOOM
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
@@ -159,9 +159,8 @@ private fun MapContentScreen(
         Scaffold (
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                TopBarWithFields(
+                TopBarWithSearchAndFields(
                     state = state,
-                    locationState = locationState,
                     onAction = onAction
                 )
             }
@@ -199,8 +198,7 @@ private fun MapContentScreen(
                 state.selectedField?.let { field ->
                     FieldInfoCard(
                         field = field,
-                        onClose = { onAction(MapLibreAction.ClearSelectedField) },
-                        onMoreDetailsClick = {}
+                        onAction = onAction
                     )
                 }
             }

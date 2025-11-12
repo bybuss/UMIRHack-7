@@ -17,4 +17,7 @@ sealed interface MapLibreAction {
     data class SelectField(val field: Field) : MapLibreAction
     data object ClearSelectedField : MapLibreAction
     data class FieldClicked(val field: Field) : MapLibreAction
+    data class UpdateSearchQuery(val query: String) : MapLibreAction
+    data object PerformSearch : MapLibreAction
+    data object ClearSearch : MapLibreAction
 }

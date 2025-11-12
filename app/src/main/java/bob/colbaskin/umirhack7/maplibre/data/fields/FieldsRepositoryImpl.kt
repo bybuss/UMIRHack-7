@@ -47,10 +47,9 @@ class FieldsRepositoryImpl @Inject constructor(
         return safeApiCall(
             apiCall = {
                 Log.d(TAG, "FieldsRepositoryImpl: Fetching fields from API...")
-                /*fieldsApi.getFieldsList()*/ //FIXME: return back
-                val mockData = mockFields
-                Log.d(TAG, "FieldsRepositoryImpl: Get ${mockData.size} fields from API")
-                mockData
+                val apiData = fieldsApi.getFieldsList()
+                Log.d(TAG, "FieldsRepositoryImpl: Get ${apiData.size} fields from API")
+                apiData
             },
             successHandler = { fieldDTOs ->
                 Log.d(TAG, "FieldsRepositoryImpl: Processing ${fieldDTOs.size} fields for DB storage")

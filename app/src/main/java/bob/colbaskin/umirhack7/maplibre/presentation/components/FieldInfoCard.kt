@@ -30,12 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
+import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreAction
 
 @Composable
 fun FieldInfoCard(
     field: Field,
-    onClose: () -> Unit,
-    onMoreDetailsClick: () -> Unit
+    onAction: (MapLibreAction) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -65,7 +65,12 @@ fun FieldInfoCard(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                IconButton(onClick = onClose) {
+                IconButton(
+                    onClick = {
+                        onAction(MapLibreAction.ClearSelectedField)
+                        onAction(MapLibreAction.ClearSearch)
+                    }
+                ) {
                     Icon(Icons.Filled.Close, contentDescription = "Закрыть")
                 }
             }
@@ -76,7 +81,7 @@ fun FieldInfoCard(
             Text(text = "Количество зон: ${field.zones.size}")
 
             Button(
-                onClick = onMoreDetailsClick,
+                onClick = { onAction(MapLibreAction.ClearSelectedField) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
