@@ -24,7 +24,6 @@ class AuthRepositoryImpl @Inject constructor(
         password: String
     ): ApiResult<Unit> {
         Log.d(TAG, "Attempting login for username: $username")
-        userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
         return safeApiCall<TokenDTO, Unit>(
             apiCall = {
                 authApi.login(
