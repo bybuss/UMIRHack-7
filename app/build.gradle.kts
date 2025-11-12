@@ -149,4 +149,7 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.paging)
     implementation(libs.androidx.room.ktx)
+
+    // Compose Icons
+    implementation(libs.composeIcons.tablerIcons)
 }
