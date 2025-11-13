@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.toUiState
-import bob.colbaskin.umirhack7.common.user_prefs.data.models.AuthConfig
 import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -16,8 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SignInViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val userPreferences: UserPreferencesRepository,
+    private val authRepository: AuthRepository
 ): ViewModel() {
 
     var state by mutableStateOf(SignInState())
@@ -44,7 +42,6 @@ class SignInViewModel @Inject constructor(
                 authState = UiState.Success(Unit),
                 isLoading = false
             )
-            userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
         }
     }
 
