@@ -9,4 +9,8 @@ option java_multiple_files = true;
 message UserPreferencesProto {
   OnboardingStatus onboardingStatus = 1;
   AuthStatus authStatus = 2;
+  string username = 3;
+  string email = 4;
+  string firstName = 5;
+  string lastName = 6;
 }

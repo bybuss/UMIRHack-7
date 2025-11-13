@@ -52,4 +52,34 @@ class UserDataStore(context: Context) {
             }
         }
     }
+
+    suspend fun saveUserInfo(
+        username: String,
+        email: String,
+        firstName: String,
+        lastName: String
+    ) {
+        Log.d(TAG, "saveUserInfo: username=$username, email=$email, firstName=$firstName, lastName=$lastName")
+        dataStore.updateData { prefs ->
+            prefs.copy {
+                this.username = username
+                this.email = email
+                this.firstName = firstName
+                this.lastName = lastName
+            }
+        }
+    }
+
+    suspend fun clearUser() {
+        Log.d(TAG, "clearUser")
+        dataStore.updateData { prefs ->
+            prefs.copy {
+                clearUsername()
+                clearEmail()
+                clearFirstName()
+                clearLastName()
+                clearAuthStatus()
+            }
+        }
+    }
 }

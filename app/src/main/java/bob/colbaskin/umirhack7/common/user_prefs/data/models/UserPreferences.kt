@@ -6,7 +6,11 @@ import bob.colbaskin.umirhack7.datastore.UserPreferencesProto
 
 data class UserPreferences(
     val onboardingStatus: OnboardingConfig,
-    val authStatus: AuthConfig
+    val authStatus: AuthConfig,
+    val username: String,
+    val email: String,
+    val firstName: String,
+    val lastName: String
 )
 
 fun UserPreferencesProto.toData(): UserPreferences {
@@ -21,6 +25,10 @@ fun UserPreferencesProto.toData(): UserPreferences {
             AuthStatus.AUTHENTICATED -> AuthConfig.AUTHENTICATED
             AuthStatus.NOT_AUTHENTICATED -> AuthConfig.NOT_AUTHENTICATED
             AuthStatus.UNRECOGNIZED, null -> AuthConfig.NOT_AUTHENTICATED
-        }
+        },
+        username = this.username,
+        email = this.email,
+        firstName = this.firstName,
+        lastName = this.lastName,
     )
 }

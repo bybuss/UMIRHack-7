@@ -1,4 +1,4 @@
-package bob.colbaskin.umirhack7.auth.presentation.sign_in
+package bob.colbaskin.umirhack7.auth.presentation.sign_up
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -9,43 +9,46 @@ import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
-class SignInViewModel @Inject constructor(
+class SignUpViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ): ViewModel() {
 
-    var state by mutableStateOf(SignInState())
+    var state by mutableStateOf(SignUpState())
         private set
 
-    fun onAction(action: SignInAction) {
+    fun onAction(action: SignUpAction) {
         when (action) {
-            is SignInAction.UpdateUserName -> updateUserName(action.username)
-            is SignInAction.UpdatePassword -> updatePassword(action.password)
-            SignInAction.SignIn -> login()
+            SignUpAction.SignUp -> register()
+            is SignUpAction.UpdateEmail -> updateEmail(action.email)
+            is SignUpAction.UpdatePassword -> updatePassword(action.password)
             else -> Unit
         }
     }
 
-    private fun login() {
+    private fun register() {
         state = state.copy(isLoading = true)
         viewModelScope.launch {
-            authRepository.login(
-                username = state.username,
-                password = state.password
+            val response = authRepository.register(
+                username = state.userName,
+                email = state.email,
+                password = state.password,
+                firstName = state.firstName,
+                lastName = state.lastName
             ).toUiState()
 
             state = state.copy(
-                authState = UiState.Success(Unit),
+                authState = UiState.Success(Unit)/* response */,
                 isLoading = false
             )
         }
     }
 
-    private fun updateUserName(username: String) {
-        state = state.copy(username = username)
+    private fun updateEmail(email: String) {
+        state = state.copy(email = email)
     }
 
     private fun updatePassword(password: String) {
