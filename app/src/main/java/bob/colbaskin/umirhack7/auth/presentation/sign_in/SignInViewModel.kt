@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.toUiState
-import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
