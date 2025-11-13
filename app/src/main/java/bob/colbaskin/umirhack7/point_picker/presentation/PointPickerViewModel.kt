@@ -1,5 +1,8 @@
 package bob.colbaskin.umirhack7.point_picker.presentation
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
@@ -8,10 +11,8 @@ import bob.colbaskin.umirhack7.point_picker.domain.GetZoneByIdUseCase
 import bob.colbaskin.umirhack7.point_picker.domain.PointInPolygonChecker
 import bob.colbaskin.umirhack7.point_picker.domain.model.MeasurementPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
@@ -22,45 +23,73 @@ class PointPickerViewModel @Inject constructor(
     private val pointInPolygonChecker: PointInPolygonChecker
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(PointPickerState())
-    val state: StateFlow<PointPickerState> = _state.asStateFlow()
+    var state by mutableStateOf(PointPickerState())
+        private set
+
+    private var validationJob: Job? = null
 
     fun onAction(action: PointPickerAction) {
         when (action) {
             is PointPickerAction.LoadZoneData -> loadZoneData(action.zoneId)
-            is PointPickerAction.UpdatePointPosition -> updatePointPosition(action.latLng)
-            PointPickerAction.ConfirmSelection -> confirmSelection()
-            PointPickerAction.CancelSelection -> cancelSelection()
+            is PointPickerAction.UpdatePointPosition -> updatePointPositionWithDebounce(action.latLng)
             PointPickerAction.UseCurrentLocation -> useCurrentLocation()
         }
     }
 
+    private fun updatePointPositionWithDebounce(latLng: LatLng) {
+        validationJob?.cancel()
+
+        state = state.copy(
+            measurementPoint = MeasurementPoint(
+                coordinates = latLng,
+                isValid = state.measurementPoint.isValid
+            )
+        )
+
+        validationJob = viewModelScope.launch {
+            delay(500)
+            validatePointPosition(latLng)
+        }
+    }
+
+    private fun validatePointPosition(latLng: LatLng) {
+        val currentZone = state.zone
+        if (currentZone != null) {
+            val vertices = currentZone.geometry.toLatLngList()
+            val isInside = pointInPolygonChecker.isPointInPolygon(latLng, vertices)
+
+            state = state.copy(
+                measurementPoint = MeasurementPoint(
+                    coordinates = latLng,
+                    isValid = isInside
+                )
+            )
+        }
+    }
     private fun loadZoneData(zoneId: Int) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            state = state.copy(isLoading = true)
 
             try {
                 val zone = getZoneByIdUseCase(zoneId)
                 val zoneCenter = calculateZoneCenter(zone)
 
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        zone = zone,
-                        cameraTarget = zoneCenter,
-                        measurementPoint = MeasurementPoint(
-                            coordinates = zoneCenter,
-                            isValid = true
-                        )
+                state = state.copy(
+                    isLoading = false,
+                    zone = zone,
+                    cameraTarget = zoneCenter,
+                    measurementPoint = MeasurementPoint(
+                        coordinates = zoneCenter,
+                        isValid = true
                     )
-                }
+                )
+
+                validatePointPosition(zoneCenter)
             } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = "Ошибка загрузки зоны: ${e.message}"
-                    )
-                }
+                state = state.copy(
+                    isLoading = false,
+                    error = "Ошибка загрузки зоны: ${e.message}"
+                )
             }
         }
     }
@@ -87,34 +116,10 @@ class PointPickerViewModel @Inject constructor(
         )
     }
 
-    private fun updatePointPosition(latLng: LatLng) {
-        val currentZone = _state.value.zone
-        if (currentZone != null) {
-            val vertices = currentZone.geometry.toLatLngList()
-            val isInside = pointInPolygonChecker.isPointInPolygon(latLng, vertices)
-
-            _state.update {
-                it.copy(
-                    measurementPoint = MeasurementPoint(
-                        coordinates = latLng,
-                        isValid = isInside
-                    )
-                )
-            }
-        }
-    }
-
     private fun useCurrentLocation() {
-        // TODO: Здесь будет получение текущего местоположения. Пока просто центрирую на текущей точечкеееее о-е, о-е, Солнышко Смоленское!
-        val currentPoint = _state.value.measurementPoint.coordinates
+        val currentPoint = state.measurementPoint.coordinates
         if (currentPoint != null) {
-            _state.update {
-                it.copy(cameraTarget = currentPoint)
-            }
+            state = state.copy(cameraTarget = currentPoint)
         }
     }
-
-    private fun confirmSelection() {}
-
-    private fun cancelSelection() {}
 }

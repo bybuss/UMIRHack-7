@@ -6,10 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import bob.colbaskin.umirhack7.common.design_system.theme.UMIRHack7Theme
-
 import dagger.hilt.android.AndroidEntryPoint
 import org.maplibre.android.MapLibre
 
@@ -30,7 +27,7 @@ class PointPickerActivity : ComponentActivity() {
 
         setContent {
             UMIRHack7Theme {
-                val state by viewModel.state.collectAsState()
+                val state = viewModel.state
 
                 PointPickerScreen(
                     state = state,

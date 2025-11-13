@@ -3,6 +3,7 @@ package bob.colbaskin.umirhack7.point_picker.domain
 import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 @Singleton
 class PointInPolygonChecker @Inject constructor() {
@@ -10,44 +11,50 @@ class PointInPolygonChecker @Inject constructor() {
     fun isPointInPolygon(point: LatLng, polygon: List<LatLng>): Boolean {
         if (polygon.size < 3) return false
 
-        var crossings = 0
-        val vertices = polygon + polygon.first()
+        var inside = false
+        val n = polygon.size
 
-        for (i in 0 until polygon.size) {
-            val a = vertices[i]
-            val b = vertices[i + 1]
+        var j = n - 1
+        for (i in 0 until n) {
+            val vi = polygon[i]
+            val vj = polygon[j]
 
-            if (rayCrossesSegment(point, a, b)) {
-                crossings++
+            if (isPointOnVertex(point, vi)) {
+                return true
             }
+
+            if ((vi.latitude > point.latitude) != (vj.latitude > point.latitude) &&
+                point.longitude < (vj.longitude - vi.longitude) * (point.latitude - vi.latitude) /
+                (vj.latitude - vi.latitude) + vi.longitude) {
+                inside = !inside
+            }
+
+            j = i
         }
 
-        return crossings % 2 == 1
+        return inside
     }
 
-    private fun rayCrossesSegment(point: LatLng, a: LatLng, b: LatLng): Boolean {
-        val px = point.longitude
-        val py = point.latitude
-        val ax = a.longitude
-        val ay = a.latitude
-        val bx = b.longitude
-        val by = b.latitude
+    private fun isPointOnVertex(point: LatLng, vertex: LatLng): Boolean {
+        val tolerance = 1e-10
+        return (abs(point.latitude - vertex.latitude) < tolerance &&
+                abs(point.longitude - vertex.longitude) < tolerance)
+    }
 
-        if ((ay > py && by > py) || (ay < py && by < py)) {
-            return false
-        }
+    private fun isPointOnEdge(point: LatLng, a: LatLng, b: LatLng): Boolean {
+        val crossProduct = (point.longitude - a.longitude) * (b.latitude - a.latitude) -
+                (point.latitude - a.latitude) * (b.longitude - a.longitude)
 
-        if (px >= maxOf(ax, bx)) {
-            return false
-        }
+        if (abs(crossProduct) > 1e-10) return false
 
-        if (px < minOf(ax, bx)) {
-            return true
-        }
+        val dotProduct = (point.longitude - a.longitude) * (b.longitude - a.longitude) +
+                (point.latitude - a.latitude) * (b.latitude - a.latitude)
 
-        val red = if (ax != bx) (by - ay) / (bx - ax) else Double.MAX_VALUE
-        val blue = if (ax != px) (py - ay) / (px - ax) else Double.MAX_VALUE
+        if (dotProduct < 0) return false
 
-        return blue > red
+        val squaredLength = (b.longitude - a.longitude) * (b.longitude - a.longitude) +
+                (b.latitude - a.latitude) * (b.latitude - a.latitude)
+
+        return dotProduct <= squaredLength
     }
 }
