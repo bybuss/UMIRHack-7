@@ -19,5 +19,8 @@ interface Screens {
     data object SignIn: Screens
 
     @Serializable
+    data object SignUp: Screens
+
+    @Serializable
     data class SoilAnalyze(val id: Int): Screens
 }

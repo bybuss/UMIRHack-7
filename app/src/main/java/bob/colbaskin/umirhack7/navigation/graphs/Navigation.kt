@@ -5,6 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.navigation
 import bob.colbaskin.umirhack7.auth.presentation.sign_in.SignInScreenRoot
+import bob.colbaskin.umirhack7.auth.presentation.sign_up.SignUpScreenRoot
 import bob.colbaskin.umirhack7.common.user_prefs.data.models.OnboardingConfig
 import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreScreenRoot
 import bob.colbaskin.umirhack7.navigation.Screens
@@ -39,6 +40,12 @@ fun NavGraphBuilder.onboardingGraph(
         }
         animatedTransition<Screens.SignIn> {
             SignInScreenRoot(
+                navController = navController,
+                snackbarHostState = snackbarHostState
+            )
+        }
+        animatedTransition<Screens.SignUp> {
+            SignUpScreenRoot(
                 navController = navController,
                 snackbarHostState = snackbarHostState
             )

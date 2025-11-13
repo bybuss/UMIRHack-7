@@ -2,6 +2,7 @@ package bob.colbaskin.umirhack7.auth.data
 
 import android.util.Log
 import bob.colbaskin.umirhack7.auth.data.models.LoginBody
+import bob.colbaskin.umirhack7.auth.data.models.RegisterBody
 import bob.colbaskin.umirhack7.auth.data.models.TokenDTO
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthApiService
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
@@ -36,6 +37,39 @@ class AuthRepositoryImpl @Inject constructor(
             successHandler = { response ->
                 Log.d(TAG, "Login successful. Saving Authenticated status")
                 userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
+                tokenManager.saveTokens(
+                    accessToken = response.accessToken,
+                    refreshToken = response.refreshToken
+                )
+                response
+            }
+        )
+    }
+
+    override suspend fun register(
+        username: String,
+        email: String,
+        password: String,
+        firstName: String,
+        lastName: String
+    ): ApiResult<Unit> {
+        Log.d(TAG, "Attempting register for username: $username")
+        return safeApiCall<TokenDTO, Unit>(
+            apiCall = {
+                authApi.register(
+                    body = RegisterBody(
+                        username = username,
+                        email = email,
+                        password = password,
+                        firstName = firstName,
+                        lastName = lastName
+                    )
+                )
+            },
+            successHandler = { response ->
+                Log.d(TAG, "Register successful. Saving Authenticated status")
+                userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
+                // TODO: Save into UserPreferences user
                 tokenManager.saveTokens(
                     accessToken = response.accessToken,
                     refreshToken = response.refreshToken

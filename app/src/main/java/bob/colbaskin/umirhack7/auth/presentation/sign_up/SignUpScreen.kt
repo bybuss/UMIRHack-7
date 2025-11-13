@@ -1,4 +1,4 @@
-package bob.colbaskin.umirhack7.auth.presentation.sign_in
+package bob.colbaskin.umirhack7.auth.presentation.sign_up
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,20 +46,20 @@ import bob.colbaskin.umirhack7.navigation.graphs.Graphs
 import kotlinx.coroutines.launch
 
 @Composable
-fun SignInScreenRoot(
+fun SignUpScreenRoot(
     navController: NavHostController,
     snackbarHostState: SnackbarHostState,
-    viewModel: SignInViewModel = hiltViewModel()
+    viewModel: SignUpViewModel = hiltViewModel()
 ) {
     val state = viewModel.state
     val authState = state.authState
     val scope = rememberCoroutineScope()
 
-    SignInScreen(
+    SignUpScreen(
         state = state,
         onAction = { action ->
             when (action) {
-                SignInAction.SignIn -> {
+                SignUpAction.SignUp -> {
                     when (authState) {
                         is UiState.Success -> { navController.navigate(Graphs.Main) }
                         is UiState.Error -> {
@@ -73,7 +73,7 @@ fun SignInScreenRoot(
                         else -> {}
                     }
                 }
-                SignInAction.SignUp -> { navController.navigate(Screens.SignUp) }
+                SignUpAction.SignIn -> { navController.navigate(Screens.SignIn) }
                 else -> Unit
             }
             viewModel.onAction(action)
@@ -82,9 +82,9 @@ fun SignInScreenRoot(
 }
 
 @Composable
-private fun SignInScreen(
-    state: SignInState,
-    onAction: (SignInAction) -> Unit,
+private fun SignUpScreen(
+    state: SignUpState,
+    onAction: (SignUpAction) -> Unit,
 ) {
     val lineColor = CustomTheme.colors.color
     val scrollState = rememberScrollState()
@@ -104,7 +104,7 @@ private fun SignInScreen(
                 .imePadding()
         ) {
             Text(
-                text = "Вход",
+                text = "Регистрация",
                 modifier = Modifier.drawBehind {
                     val strokeWidth = 2.dp.toPx()
                     val y = size.height - strokeWidth + 16
@@ -116,19 +116,25 @@ private fun SignInScreen(
                     )
                 }
             )
-
             Column {
                 OutlinedTextField(
-                    value = state.username,
-                    onValueChange = { onAction(SignInAction.UpdateUserName(it)) },
+                    value = state.userName,
+                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
                     label = { Text("Юзернейм") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = !state.isNameValid,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = state.email,
+                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    label = { Text("Почта") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    isError = !state.isEmailValid,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = state.password,
-                    onValueChange = { onAction(SignInAction.UpdatePassword(it)) },
+                    onValueChange = { onAction(SignUpAction.UpdatePassword(it)) },
                     label = { Text("Пароль") },
                     visualTransformation = if (showPassword) VisualTransformation.None
                     else PasswordVisualTransformation(),
@@ -146,10 +152,24 @@ private fun SignInScreen(
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
+                OutlinedTextField(
+                    value = state.firstName,
+                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    label = { Text("Имя") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = state.lastName,
+                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    label = { Text("Фамилия") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Button(
-                    onClick = { onAction(SignInAction.SignIn) },
+                    onClick = { onAction(SignUpAction.SignUp) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !state.isLoading
                 ) {
@@ -158,14 +178,14 @@ private fun SignInScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     } else {
-                        Text("Войти")
+                        Text("Зарегистрироваться")
                     }
                 }
                 TextButton(
-                    onClick = { onAction(SignInAction.SignUp) },
+                    onClick = { onAction(SignUpAction.SignIn) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Нет аккаунта? Зарегистрироваться")
+                    Text("Уже есть аккаунт? Войти")
                 }
             }
         }
