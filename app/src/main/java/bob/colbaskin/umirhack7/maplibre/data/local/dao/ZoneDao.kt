@@ -23,4 +23,7 @@ interface ZoneDao {
 
     @Query("DELETE FROM zones WHERE fieldId = :fieldId")
     suspend fun deleteZonesForField(fieldId: Int)
+
+    @Query("SELECT * FROM zones WHERE id = :zoneId")
+    suspend fun getZoneById(zoneId: Int): ZoneEntity?
 }

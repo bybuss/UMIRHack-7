@@ -48,6 +48,10 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <activity
+            android:name=".point_picker.presentation.PointPickerActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

@@ -231,15 +231,5 @@ private fun FieldsRenderer(fields: List<Field>, selectedField: Field? = null) {
             borderWidth = if (isSelected) 5.0f else 3.0f,
             borderColor = if (isSelected) "#FFD700" else field.color,
         )
-
-        field.zones.forEach { zone ->
-            Polygon(
-                vertices = zone.geometry.toLatLngList(),
-                fillColor = zone.color,
-                opacity = if (isSelected) 0.9f else 0.7f,
-                borderWidth = if (isSelected) 3.0f else 2.0f,
-                borderColor = zone.color,
-            )
-        }
     }
 }

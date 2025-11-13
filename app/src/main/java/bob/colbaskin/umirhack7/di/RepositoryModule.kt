@@ -20,10 +20,14 @@ import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.maplibre.data.fields.FieldsRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.local.FieldsDatabase
+import bob.colbaskin.umirhack7.maplibre.data.local.dao.ZoneDao
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsService
+import bob.colbaskin.umirhack7.point_picker.data.ZoneRepositoryImpl
+import bob.colbaskin.umirhack7.point_picker.domain.ZoneRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
+import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -139,5 +143,17 @@ object RepositoryModule {
             fieldsApi = fieldsApi,
             database = database
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideZoneRepository(zoneDao: ZoneDao): ZoneRepository {
+        return ZoneRepositoryImpl(zoneDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationClient(@ApplicationContext context: Context): LocationClient {
+        return LocationClient(context)
     }
 }

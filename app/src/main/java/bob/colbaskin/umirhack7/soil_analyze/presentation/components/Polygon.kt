@@ -50,18 +50,13 @@ private fun DrawScope.drawPolygon(
         }
     }
 
-    // Рисуем заливку
     drawPath(path, fillColor, style = Fill)
-
-    // Рисуем обводку
     drawPath(path, borderColor, style = Stroke(width = borderWidth))
 }
 
-// Функция для нормализации координат в пространство Canvas
 private fun Geometry.toNormalizedPoints(size: androidx.compose.ui.geometry.Size): List<Offset> {
-    val coordinates = this.coordinates[0] // Берем первый контур полигона
+    val coordinates = this.coordinates[0]
 
-    // Находим границы полигона
     var minLon = Double.MAX_VALUE
     var maxLon = Double.MIN_VALUE
     var minLat = Double.MAX_VALUE
@@ -79,10 +74,9 @@ private fun Geometry.toNormalizedPoints(size: androidx.compose.ui.geometry.Size)
     val lonRange = maxLon - minLon
     val latRange = maxLat - minLat
 
-    // Нормализуем координаты в пространство [0,1]
     return coordinates.map { point ->
         val normalizedX = (point[0] - minLon) / lonRange
-        val normalizedY = 1 - (point[1] - minLat) / latRange // Инвертируем Y
+        val normalizedY = 1 - (point[1] - minLat) / latRange
 
         Offset(
             x = (normalizedX * size.width).toFloat(),

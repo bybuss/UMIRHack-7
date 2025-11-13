@@ -3,7 +3,7 @@ package bob.colbaskin.umirhack7.soil_analyze.presentation.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
-import bob.colbaskin.umirhack7.soil_analyze.presentation.utils.parseColor
+import bob.colbaskin.umirhack7.soil_analyze.utils.parseColor
 
 @Composable
 fun FieldPolygon(
