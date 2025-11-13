@@ -69,7 +69,12 @@ class AuthRepositoryImpl @Inject constructor(
             successHandler = { response ->
                 Log.d(TAG, "Register successful. Saving Authenticated status")
                 userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
-                // TODO: Save into UserPreferences user
+                userPreferences.saveUserInfo(
+                    username = username,
+                    email = email,
+                    firstName = firstName,
+                    lastName = lastName
+                )
                 tokenManager.saveTokens(
                     accessToken = response.accessToken,
                     refreshToken = response.refreshToken
