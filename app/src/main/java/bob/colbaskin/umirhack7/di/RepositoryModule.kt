@@ -27,6 +27,7 @@ import bob.colbaskin.umirhack7.point_picker.data.ZoneRepositoryImpl
 import bob.colbaskin.umirhack7.point_picker.domain.ZoneRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
+import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -148,5 +149,11 @@ object RepositoryModule {
     @Singleton
     fun provideZoneRepository(zoneDao: ZoneDao): ZoneRepository {
         return ZoneRepositoryImpl(zoneDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationClient(@ApplicationContext context: Context): LocationClient {
+        return LocationClient(context)
     }
 }

@@ -1,11 +1,13 @@
 package bob.colbaskin.umirhack7.soil_analyze.presentation
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,9 +31,21 @@ import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
 import bob.colbaskin.umirhack7.maplibre.domain.models.Zone
 import bob.colbaskin.umirhack7.point_picker.presentation.PointPickerActivity
-import bob.colbaskin.umirhack7.soil_analyze.presentation.components.FieldPolygon
 import bob.colbaskin.umirhack7.soil_analyze.presentation.components.ZonePolygon
 import org.maplibre.android.geometry.LatLng
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
+import bob.colbaskin.umirhack7.soil_analyze.presentation.components.SoilAnalyzeTopBar
+import bob.colbaskin.umirhack7.soil_analyze.presentation.components.ZoneSoilAnalysisForm
 
 @Composable
 fun SoilAnalyzeScreenRoot(
@@ -43,7 +56,6 @@ fun SoilAnalyzeScreenRoot(
     val context = LocalContext.current
     val state = viewModel.state
 
-    // Создаем launcher для PointPickerActivity
     val pointPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -51,7 +63,15 @@ fun SoilAnalyzeScreenRoot(
             result.data?.let { data ->
                 val location = PointPickerActivity.getResultPoint(data)
                 val point = LatLng(location.latitude, location.longitude)
-                viewModel.onAction(SoilAnalyzeAction.UpdateMeasurementPoint(point))
+
+                state.expandedZoneId?.let { zoneId ->
+                    viewModel.onAction(SoilAnalyzeAction.UpdateZoneMeasurementPoint(zoneId, point))
+                }
+                Toast.makeText(
+                    context,
+                    "Точка успешно выбрана",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -62,20 +82,24 @@ fun SoilAnalyzeScreenRoot(
 
     SoilAnalyzeScreen(
         state = state,
-        onAction = viewModel::onAction,
-        onNavigateToPointPicker = { zoneId ->
-            val intent = PointPickerActivity.createIntent(context, zoneId)
-            pointPickerLauncher.launch(intent)
-        }
+        onAction = { action ->
+            when (action) {
+                is SoilAnalyzeAction.OpenMapForZone -> {
+                    val intent = PointPickerActivity.createIntent(context, action.zoneId)
+                    pointPickerLauncher.launch(intent)
+                }
+                else -> viewModel.onAction(action)
+            }
+        },
+        onBack = { navController.popBackStack() }
     )
 }
-
 
 @Composable
 private fun SoilAnalyzeScreen(
     state: SoilAnalyzeState,
     onAction: (SoilAnalyzeAction) -> Unit,
-    onNavigateToPointPicker: (Int) -> Unit
+    onBack: () -> Unit
 ) {
     when (val stateField = state.fieldDetailState) {
         is UiState.Error -> {
@@ -86,43 +110,54 @@ private fun SoilAnalyzeScreen(
         UiState.Loading -> LoadingScreen()
         is UiState.Success -> {
             stateField.data?.let { field ->
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
-                ) {
-                    item {
-                        FieldInfoCard(
+                Scaffold(
+                    topBar = {
+                        SoilAnalyzeTopBar(
                             field = field,
-                            measurementPoint = state.measurementPoint,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
+                            onBack = onBack
                         )
                     }
+                ) { innerPadding ->
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .padding(16.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Участки поля (${field.zones.size})",
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
 
-                    item {
-                        Text(
-                            text = "Зоны (${field.zones.size})",
-                            style = MaterialTheme.typography.headlineSmall,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-
-                    items(field.zones) { zone ->
-                        ZoneCard(
-                            zone = zone,
-                            measurementPoint = state.measurementPoint,
-                            onSelectPoint = { onNavigateToPointPicker(zone.id) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        )
+                        items(field.zones) { zone ->
+                            val zoneState = state.getZoneAnalysisState(zone.id)
+                            ExpandableZoneCard(
+                                zone = zone,
+                                isExpanded = state.expandedZoneId == zone.id,
+                                soilAnalysisData = zoneState.soilAnalysisData,
+                                measurementPoint = zoneState.measurementPoint,
+                                locationError = zoneState.locationError,
+                                isSubmitting = zoneState.isSubmitting,
+                                submitError = zoneState.submitError,
+                                submitSuccess = zoneState.submitSuccess,
+                                onToggleExpansion = {
+                                    onAction(SoilAnalyzeAction.ToggleZoneExpansion(zone.id))
+                                },
+                                onAction = onAction,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            )
+                        }
                     }
                 }
             } ?: run {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Text("Данные поля не найдены")
+                    Text("Данные поля не найдены!")
                 }
             }
         }
@@ -130,77 +165,37 @@ private fun SoilAnalyzeScreen(
 }
 
 @Composable
-private fun FieldInfoCard(
-    field: bob.colbaskin.umirhack7.maplibre.domain.models.Field,
-    measurementPoint: LatLng?,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = field.name,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            Text(
-                text = "Площадь: ${"%.2f".format(field.area / 10000)} га",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            // Информация о точке измерения
-            measurementPoint?.let { point ->
-                Text(
-                    text = "Точка измерения: ${"%.6f".format(point.latitude)}, ${"%.6f".format(point.longitude)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(top = 16.dp)
-            ) {
-                FieldPolygon(
-                    field = field,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ZoneCard(
+fun ExpandableZoneCard(
     zone: Zone,
+    isExpanded: Boolean,
+    soilAnalysisData: SoilAnalysisData,
     measurementPoint: LatLng?,
-    onSelectPoint: () -> Unit,
+    locationError: String?,
+    isSubmitting: Boolean,
+    submitError: String?,
+    submitSuccess: Boolean,
+    onToggleExpansion: () -> Unit,
+    onAction: (SoilAnalyzeAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                ZonePolygon(
+                    zone = zone,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .padding(end = 12.dp)
+                )
+
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -213,72 +208,43 @@ private fun ZoneCard(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
-                    // Показываем координаты точки, если она есть для этой зоны
-                    measurementPoint?.let { point ->
-                        Text(
-                            text = "Точка: ${"%.6f".format(point.latitude)}, ${"%.6f".format(point.longitude)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
                 }
 
-                ZonePolygon(
-                    zone = zone,
-                    modifier = Modifier
-                        .size(80.dp)
-                        .padding(8.dp)
-                )
+                IconButton(onClick = onToggleExpansion) {
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                        contentDescription = if (isExpanded) "Свернуть" else "Раскрыть"
+                    )
+                }
             }
 
-            Button(
-                onClick = onSelectPoint,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(animationSpec = tween(300)),
+                exit = shrinkVertically(animationSpec = tween(300))
             ) {
-                Text("Выбрать точку измерения")
-            }
-        }
-    }
-}
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Анализ почвы для зоны ${zone.name}",
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
-@Composable
-private fun ZoneCard(
-    zone: Zone,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = zone.name,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = "Площадь: ${"%.2f".format(zone.area / 10000)} га",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    ZoneSoilAnalysisForm(
+                        zoneId = zone.id,
+                        soilAnalysisData = soilAnalysisData,
+                        measurementPoint = measurementPoint,
+                        locationError = locationError,
+                        isSubmitting = isSubmitting,
+                        submitError = submitError,
+                        submitSuccess = submitSuccess,
+                        onAction = onAction,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
-
-            ZonePolygon(
-                zone = zone,
-                modifier = Modifier
-                    .size(80.dp)
-                    .padding(8.dp)
-            )
         }
     }
 }

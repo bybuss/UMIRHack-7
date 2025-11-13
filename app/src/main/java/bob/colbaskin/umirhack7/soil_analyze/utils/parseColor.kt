@@ -1,4 +1,4 @@
-package bob.colbaskin.umirhack7.soil_analyze.presentation.utils
+package bob.colbaskin.umirhack7.soil_analyze.utils
 
 import androidx.compose.ui.graphics.Color
 

@@ -8,7 +8,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.UiState
+import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
+import bob.colbaskin.umirhack7.point_picker.domain.PointInPolygonChecker
+import bob.colbaskin.umirhack7.soil_analyze.data.models.toAnalysisLocation
+import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
+import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
@@ -18,23 +23,198 @@ private const val TAG = "Soil"
 
 @HiltViewModel
 class SoilAnalyzeViewModel @Inject constructor(
-    private val fieldsRepository: FieldsRepository
-): ViewModel() {
+    private val fieldsRepository: FieldsRepository,
+    private val locationClient: LocationClient,
+    private val pointInPolygonChecker: PointInPolygonChecker
+) : ViewModel() {
+
     var state by mutableStateOf(SoilAnalyzeState())
         private set
 
     fun onAction(action: SoilAnalyzeAction) {
         when (action) {
-            SoilAnalyzeAction.ClearFieldDetail -> clearFieldDetail()
             is SoilAnalyzeAction.LoadFieldDetail -> loadFieldDetail(action.fieldId)
             is SoilAnalyzeAction.SyncFieldDetail -> syncFieldDetail(action.fieldId)
-            is SoilAnalyzeAction.UpdateMeasurementPoint -> updateMeasurementPoint(action.point)
+            SoilAnalyzeAction.ClearFieldDetail -> clearFieldDetail()
+            is SoilAnalyzeAction.ToggleZoneExpansion -> toggleZoneExpansion(action.zoneId)
+            is SoilAnalyzeAction.UpdateZoneSoilAnalysisData -> updateZoneSoilAnalysisData(action.zoneId, action.data)
+            is SoilAnalyzeAction.UpdateZoneMeasurementPoint -> updateZoneMeasurementPoint(action.zoneId, action.point)
+            is SoilAnalyzeAction.SubmitZoneAnalysis -> submitZoneAnalysis(action.zoneId)
+            is SoilAnalyzeAction.ShowZoneLocationOptions -> showZoneLocationOptions(action.zoneId)
+            is SoilAnalyzeAction.HideZoneLocationOptions -> hideZoneLocationOptions(action.zoneId)
+            is SoilAnalyzeAction.UseCurrentLocationForZone -> useCurrentLocationForZone(action.zoneId)
+            is SoilAnalyzeAction.OpenMapForZone -> openMapForZone(action.zoneId)
+            is SoilAnalyzeAction.ClearZoneLocationError -> clearZoneLocationError(action.zoneId)
         }
     }
 
-    private fun updateMeasurementPoint(point: LatLng) {
-        Log.d(TAG, "updateMeasurementPoint: $point")
-        state = state.copy(measurementPoint = point)
+    private fun updateZoneSoilAnalysisData(zoneId: Int, data: SoilAnalysisData) {
+        Log.d(TAG, "updateZoneSoilAnalysisData: Zone $zoneId - $data")
+        val currentState = state.getZoneAnalysisState(zoneId)
+        state = state.updateZoneAnalysisState(zoneId, currentState.copy(soilAnalysisData = data))
+    }
+
+    private fun updateZoneMeasurementPoint(zoneId: Int, point: LatLng) {
+        Log.d(TAG, "updateZoneMeasurementPoint: Zone $zoneId - $point")
+        val currentState = state.getZoneAnalysisState(zoneId)
+        state = state.updateZoneAnalysisState(
+            zoneId,
+            currentState.copy(
+                measurementPoint = point,
+                locationError = null
+            )
+        )
+    }
+
+    private fun submitZoneAnalysis(zoneId: Int) {
+        Log.d(TAG, "submitZoneAnalysis: Submitting analysis for zone $zoneId")
+
+        val zoneState = state.getZoneAnalysisState(zoneId)
+
+        if (zoneState.measurementPoint == null) {
+            val updatedState = zoneState.copy(submitError = "Необходимо указать местоположение анализа")
+            state = state.updateZoneAnalysisState(zoneId, updatedState)
+            return
+        }
+
+        val updatedState = zoneState.copy(isSubmitting = true, submitError = null)
+        state = state.updateZoneAnalysisState(zoneId, updatedState)
+
+        viewModelScope.launch {
+            try {
+                val analysisData = zoneState.soilAnalysisData.copy(
+                    location = zoneState.measurementPoint.toAnalysisLocation()
+                )
+
+                Log.d(TAG, "submitZoneAnalysis: Data prepared for zone $zoneId - $analysisData")
+
+                kotlinx.coroutines.delay(1000)
+
+                val successState = zoneState.copy(
+                    isSubmitting = false,
+                    submitSuccess = true,
+                    submitError = null
+                )
+                state = state.updateZoneAnalysisState(zoneId, successState)
+
+                Log.d(TAG, "submitZoneAnalysis: Analysis submitted successfully for zone $zoneId")
+
+                kotlinx.coroutines.delay(500)
+                state = state.copy(expandedZoneId = null)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "submitZoneAnalysis: Error submitting analysis for zone $zoneId", e)
+                val errorState = zoneState.copy(
+                    isSubmitting = false,
+                    submitError = "Ошибка отправки данных: ${e.message}"
+                )
+                state = state.updateZoneAnalysisState(zoneId, errorState)
+            }
+        }
+    }
+
+    private fun showZoneLocationOptions(zoneId: Int) {
+        Log.d(TAG, "showZoneLocationOptions: Zone $zoneId")
+        val currentState = state.getZoneAnalysisState(zoneId)
+        state = state.updateZoneAnalysisState(zoneId, currentState.copy(showLocationOptions = true))
+    }
+
+    private fun hideZoneLocationOptions(zoneId: Int) {
+        Log.d(TAG, "hideZoneLocationOptions: Zone $zoneId")
+        val currentState = state.getZoneAnalysisState(zoneId)
+        state = state.updateZoneAnalysisState(zoneId, currentState.copy(showLocationOptions = false))
+    }
+
+    private fun useCurrentLocationForZone(zoneId: Int) {
+        Log.d(TAG, "useCurrentLocationForZone: Zone $zoneId")
+
+        val field = (state.fieldDetailState as? UiState.Success)?.data
+        val zone = field?.zones?.find { it.id == zoneId }
+
+        if (zone == null) {
+            val currentState = state.getZoneAnalysisState(zoneId)
+            state = state.updateZoneAnalysisState(
+                zoneId,
+                currentState.copy(locationError = "Зона не найдена")
+            )
+            return
+        }
+
+        if (!locationClient.hasLocationPermission()) {
+            val currentState = state.getZoneAnalysisState(zoneId)
+            state = state.updateZoneAnalysisState(
+                zoneId,
+                currentState.copy(
+                    locationError = "Для использования текущего местоположения необходимы разрешения на доступ к геолокации"
+                )
+            )
+            hideZoneLocationOptions(zoneId)
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val currentLocation = locationClient.getCurrentLocation()
+                if (currentLocation != null) {
+                    val point = LatLng(currentLocation.latitude, currentLocation.longitude)
+                    val vertices = zone.geometry.toLatLngList()
+                    val isInside = pointInPolygonChecker.isPointInPolygon(point, vertices)
+
+                    if (isInside) {
+                        updateZoneMeasurementPoint(zoneId, point)
+                        Log.d(TAG, "useCurrentLocationForZone: Successfully set current location inside zone $zoneId")
+                    } else {
+                        val currentState = state.getZoneAnalysisState(zoneId)
+                        state = state.updateZoneAnalysisState(
+                            zoneId,
+                            currentState.copy(
+                                locationError = "Ваше текущее местоположение находится вне зоны. Пожалуйста, выберите точку на карте."
+                            )
+                        )
+                        Log.d(TAG, "useCurrentLocationForZone: Current location is outside zone $zoneId")
+                    }
+                } else {
+                    val currentState = state.getZoneAnalysisState(zoneId)
+                    state = state.updateZoneAnalysisState(
+                        zoneId,
+                        currentState.copy(
+                            locationError = "Не удалось получить текущее местоположение. Пожалуйста, выберите точку на карте."
+                        )
+                    )
+                    Log.d(TAG, "useCurrentLocationForZone: Failed to get current location for zone $zoneId")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "useCurrentLocationForZone: Error getting location for zone $zoneId", e)
+                val currentState = state.getZoneAnalysisState(zoneId)
+                state = state.updateZoneAnalysisState(
+                    zoneId,
+                    currentState.copy(
+                        locationError = "Ошибка получения местоположения: ${e.message}. Пожалуйста, выберите точку на карте."
+                    )
+                )
+            }
+        }
+
+        hideZoneLocationOptions(zoneId)
+    }
+
+    private fun openMapForZone(zoneId: Int) {
+        Log.d(TAG, "openMapForZone: Opening map for zone $zoneId")
+        hideZoneLocationOptions(zoneId)
+        clearZoneLocationError(zoneId)
+    }
+
+    private fun clearZoneLocationError(zoneId: Int) {
+        Log.d(TAG, "clearZoneLocationError: Zone $zoneId")
+        val currentState = state.getZoneAnalysisState(zoneId)
+        state = state.updateZoneAnalysisState(zoneId, currentState.copy(locationError = null))
+    }
+
+    private fun toggleZoneExpansion(zoneId: Int) {
+        val currentExpandedZoneId = state.expandedZoneId
+        val newExpandedZoneId = if (currentExpandedZoneId == zoneId) null else zoneId
+        state = state.copy(expandedZoneId = newExpandedZoneId)
+        Log.d(TAG, "toggleZoneExpansion: Zone $zoneId expanded: ${newExpandedZoneId == zoneId}")
     }
 
     private fun clearFieldDetail() {
@@ -58,7 +238,6 @@ class SoilAnalyzeViewModel @Inject constructor(
                         is ApiResult.Success -> {
                             state.copy(fieldDetailState = UiState.Success(dbResult.data))
                         }
-
                         is ApiResult.Error -> {
                             state.copy(
                                 fieldDetailState = UiState.Error(
