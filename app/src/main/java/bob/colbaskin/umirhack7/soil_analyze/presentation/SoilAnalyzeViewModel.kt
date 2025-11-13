@@ -11,6 +11,7 @@ import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
 
 private const val TAG = "Soil"
@@ -27,7 +28,13 @@ class SoilAnalyzeViewModel @Inject constructor(
             SoilAnalyzeAction.ClearFieldDetail -> clearFieldDetail()
             is SoilAnalyzeAction.LoadFieldDetail -> loadFieldDetail(action.fieldId)
             is SoilAnalyzeAction.SyncFieldDetail -> syncFieldDetail(action.fieldId)
+            is SoilAnalyzeAction.UpdateMeasurementPoint -> updateMeasurementPoint(action.point)
         }
+    }
+
+    private fun updateMeasurementPoint(point: LatLng) {
+        Log.d(TAG, "updateMeasurementPoint: $point")
+        state = state.copy(measurementPoint = point)
     }
 
     private fun clearFieldDetail() {

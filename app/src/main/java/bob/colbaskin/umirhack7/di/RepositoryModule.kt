@@ -20,8 +20,11 @@ import bob.colbaskin.umirhack7.maplibre.domain.NotificationRepository
 import bob.colbaskin.umirhack7.maplibre.domain.OfflineMapRepository
 import bob.colbaskin.umirhack7.maplibre.data.fields.FieldsRepositoryImpl
 import bob.colbaskin.umirhack7.maplibre.data.local.FieldsDatabase
+import bob.colbaskin.umirhack7.maplibre.data.local.dao.ZoneDao
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsService
+import bob.colbaskin.umirhack7.point_picker.data.ZoneRepositoryImpl
+import bob.colbaskin.umirhack7.point_picker.domain.ZoneRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
 import dagger.Module
@@ -139,5 +142,11 @@ object RepositoryModule {
             fieldsApi = fieldsApi,
             database = database
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideZoneRepository(zoneDao: ZoneDao): ZoneRepository {
+        return ZoneRepositoryImpl(zoneDao)
     }
 }
