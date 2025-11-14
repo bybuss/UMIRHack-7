@@ -174,7 +174,7 @@ private fun MapContentScreen(
             cameraPosition.value = CameraPosition(
                 target = target,
                 zoom = TARGET_ZOOM,
-                animationDurationMs = 1200
+                animationDurationMs = 1000
 
             )
         }
@@ -202,7 +202,15 @@ private fun MapContentScreen(
                 MapLibre(
                     modifier = Modifier.fillMaxSize(),
                     styleBuilder = Style.Builder().fromUri(MAP_STYLE_URL),
-                    cameraPosition = cameraPosition.value
+                    cameraPosition = cameraPosition.value,
+                    onStyleLoaded = {
+                        state.cameraTarget?.let { target ->
+                            cameraPosition.value = CameraPosition(
+                                target = target,
+                                zoom = TARGET_ZOOM
+                            )
+                        }
+                    }
                 ) {
                     if (state.showFields) {
                         when (val fieldsState = state.fieldsState) {

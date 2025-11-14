@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
-import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -22,7 +21,7 @@ class SignInViewModel @Inject constructor(
 
     fun onAction(action: SignInAction) {
         when (action) {
-            is SignInAction.UpdateUserName -> updateUserName(action.username)
+            is SignInAction.UpdateUserName -> updateUserName(action.userName)
             is SignInAction.UpdatePassword -> updatePassword(action.password)
             SignInAction.SignIn -> login()
             else -> Unit
@@ -32,20 +31,20 @@ class SignInViewModel @Inject constructor(
     private fun login() {
         state = state.copy(isLoading = true)
         viewModelScope.launch {
-            authRepository.login(
-                username = state.username,
+            val response = authRepository.login(
+                username = state.userName,
                 password = state.password
             ).toUiState()
 
             state = state.copy(
-                authState = UiState.Success(Unit),
+                authState = response,
                 isLoading = false
             )
         }
     }
 
-    private fun updateUserName(username: String) {
-        state = state.copy(username = username)
+    private fun updateUserName(userName: String) {
+        state = state.copy(userName = userName)
     }
 
     private fun updatePassword(password: String) {

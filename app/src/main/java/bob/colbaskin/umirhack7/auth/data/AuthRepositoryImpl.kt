@@ -3,6 +3,7 @@ package bob.colbaskin.umirhack7.auth.data
 import android.util.Log
 import bob.colbaskin.umirhack7.auth.data.models.LoginBody
 import bob.colbaskin.umirhack7.auth.data.models.RegisterBody
+import bob.colbaskin.umirhack7.auth.data.models.RegisterDTO
 import bob.colbaskin.umirhack7.auth.data.models.TokenDTO
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthApiService
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
@@ -54,7 +55,7 @@ class AuthRepositoryImpl @Inject constructor(
         lastName: String
     ): ApiResult<Unit> {
         Log.d(TAG, "Attempting register for username: $username")
-        return safeApiCall<TokenDTO, Unit>(
+        return safeApiCall<RegisterDTO, Unit>(
             apiCall = {
                 authApi.register(
                     body = RegisterBody(
@@ -67,17 +68,17 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             },
             successHandler = { response ->
-                Log.d(TAG, "Register successful. Saving Authenticated status")
-                userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
+                Log.d(TAG, "Register successful.")
                 userPreferences.saveUserInfo(
+                    userId = response.userId,
                     username = username,
                     email = email,
                     firstName = firstName,
                     lastName = lastName
                 )
-                tokenManager.saveTokens(
-                    accessToken = response.accessToken,
-                    refreshToken = response.refreshToken
+                login(
+                    username = username,
+                    password = password
                 )
                 response
             }

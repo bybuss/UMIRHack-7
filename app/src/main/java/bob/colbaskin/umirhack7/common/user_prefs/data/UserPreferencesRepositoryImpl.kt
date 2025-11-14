@@ -8,7 +8,6 @@ import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepositor
 import bob.colbaskin.umirhack7.common.user_prefs.domain.models.User
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 class UserPreferencesRepositoryImpl @Inject constructor(
@@ -25,6 +24,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override fun getUser(): Flow<User> = getUserPreferences()
         .map { userPreferences ->
             User(
+                userId = userPreferences.userId,
                 username = userPreferences.username,
                 email = userPreferences.email,
                 firstName = userPreferences.firstName,
@@ -33,11 +33,13 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         }
 
     override suspend fun saveUserInfo(
+        userId: String,
         username: String,
         email: String,
         firstName: String,
         lastName: String
     ) = dataStore.saveUserInfo(
+        userId = userId,
         username = username,
         email = email,
         firstName = firstName,

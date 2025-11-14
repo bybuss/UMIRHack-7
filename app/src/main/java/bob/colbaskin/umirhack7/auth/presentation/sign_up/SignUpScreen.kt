@@ -173,7 +173,7 @@ private fun SignUpScreen(
                 Button(
                     onClick = { onAction(SignUpAction.SignUp) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
+                    enabled = state.isFormValid,
                     colors = ButtonDefaults.getColors()
                 ) {
                     if (state.isLoading) {

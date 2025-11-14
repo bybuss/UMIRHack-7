@@ -37,11 +37,15 @@ suspend inline fun <reified T, reified R> safeApiCall(
                         text = "Пожалуйста, проверьте ваши данные."
                     )
                     401 -> ApiResult.Error(
-                        title = "Session Expired!",
+                        title = "Сессия истекла!",
                         text = "Your login session has expired. \\nPlease sign in again."
                     )
                     403 -> ApiResult.Error(
                         title = "Доступ запрещен!",
+                        text = "У вас недостаточно прав для совершения данного дествия."
+                    )
+                    409 -> ApiResult.Error(
+                        title = "Пользователь с таким именем уже существует! ${e.message}",
                         text = "У вас недостаточно прав для совершения данного дествия."
                     )
                     422 -> ApiResult.Error(
