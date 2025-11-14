@@ -52,12 +52,7 @@ fun PointPickerScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = {
-            PointPickerTopBar(
-                onBack = onBack,
-                onUseCurrentLocation = { onAction(PointPickerAction.UseCurrentLocation) }
-            )
-        },
+        topBar = { PointPickerTopBar(onBack = onBack) },
         bottomBar = {
             PointPickerBottomBar(
                 isValid = state.measurementPoint.isValid,

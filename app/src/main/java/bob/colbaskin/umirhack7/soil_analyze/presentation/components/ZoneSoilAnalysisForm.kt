@@ -40,20 +40,6 @@ fun ZoneSoilAnalysisForm(
             )
         }
 
-        ZoneLocationSelectionCard(
-            measurementPoint = measurementPoint,
-            locationError = locationError,
-            onAction = { action ->
-                when (action) {
-                    is ZoneLocationAction.UseCurrentLocation -> onAction(SoilAnalyzeAction.UseCurrentLocationForZone(zoneId))
-                    is ZoneLocationAction.ShowOptions -> onAction(SoilAnalyzeAction.ShowZoneLocationOptions(zoneId))
-                    is ZoneLocationAction.HideOptions -> onAction(SoilAnalyzeAction.HideZoneLocationOptions(zoneId))
-                    is ZoneLocationAction.OpenMap -> onAction(SoilAnalyzeAction.OpenMapForZone(zoneId))
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        )
-
         // TODO: Добавить валидацию полей
         AnalysisFieldWithHint(
             value = soilAnalysisData.N.toString(),
@@ -129,6 +115,20 @@ fun ZoneSoilAnalysisForm(
             },
             label = "Количество осадков",
             hint = "Высота слоя воды (в миллиметрах), которая выпала бы на ровную поверхность, если бы она не испарялась, не просачивалась в почву и не стекала",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        ZoneLocationSelectionCard(
+            measurementPoint = measurementPoint,
+            locationError = locationError,
+            onAction = { action ->
+                when (action) {
+                    is ZoneLocationAction.UseCurrentLocation -> onAction(SoilAnalyzeAction.UseCurrentLocationForZone(zoneId))
+                    is ZoneLocationAction.ShowOptions -> onAction(SoilAnalyzeAction.ShowZoneLocationOptions(zoneId))
+                    is ZoneLocationAction.HideOptions -> onAction(SoilAnalyzeAction.HideZoneLocationOptions(zoneId))
+                    is ZoneLocationAction.OpenMap -> onAction(SoilAnalyzeAction.OpenMapForZone(zoneId))
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
 

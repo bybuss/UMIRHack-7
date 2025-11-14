@@ -2,7 +2,9 @@ package bob.colbaskin.umirhack7.soil_analyze.presentation.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -54,10 +56,13 @@ fun AnalysisFieldWithHint(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Help,
-                    contentDescription = "Показать подсказку"
+                    contentDescription = "Показать подсказку",
+                    tint = CustomTheme.colors.secondaryGray
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         OutlinedTextField(
             value = value,

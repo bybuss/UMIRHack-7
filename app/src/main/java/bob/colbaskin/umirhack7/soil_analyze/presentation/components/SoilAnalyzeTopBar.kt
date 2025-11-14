@@ -66,7 +66,8 @@ fun SoilAnalyzeTopBar(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Назад"
+                    contentDescription = "Назад",
+                    tint = CustomTheme.colors.black
                 )
             }
         },

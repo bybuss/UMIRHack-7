@@ -17,8 +17,7 @@ import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PointPickerTopBar(
-    onBack: () -> Unit,
-    onUseCurrentLocation: () -> Unit
+    onBack: () -> Unit
 ) {
     TopAppBar(
         title = {
@@ -33,15 +32,6 @@ fun PointPickerTopBar(
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Назад",
-                    tint = CustomTheme.colors.black
-                )
-            }
-        },
-        actions = {
-            IconButton(onClick = onUseCurrentLocation) {
-                Icon(
-                    imageVector = Icons.Default.MyLocation,
-                    contentDescription = "Мое местоположение",
                     tint = CustomTheme.colors.black
                 )
             }

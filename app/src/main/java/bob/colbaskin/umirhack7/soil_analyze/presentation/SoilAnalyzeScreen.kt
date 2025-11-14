@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
 import bob.colbaskin.umirhack7.soil_analyze.presentation.components.SoilAnalyzeTopBar
 import bob.colbaskin.umirhack7.soil_analyze.presentation.components.ZoneSoilAnalysisForm
@@ -180,7 +181,8 @@ fun ExpandableZoneCard(
 ) {
     Card(
         modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.getColors()
     ) {
         Column {
             Row(

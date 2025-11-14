@@ -3,7 +3,9 @@ package bob.colbaskin.umirhack7.soil_analyze.presentation.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
@@ -41,6 +43,7 @@ fun ZoneLocationSelectionCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(bottom = 12.dp)
             ) {
                 Icon(
@@ -70,15 +73,23 @@ fun ZoneLocationSelectionCard(
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Button(
                 onClick = { onAction(ZoneLocationAction.OpenMap) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.getColors()
             ) {
                 if (measurementPoint == null) {
-                    Text("Выбрать местоположение")
+                    Text(
+                        "Выбрать местоположение",
+                        color = CustomTheme.colors.black
+                    )
                 } else {
-                    Text("Изменить местоположение")
+                    Text(
+                        "Изменить местоположение",
+                        color = CustomTheme.colors.black
+                    )
                 }
             }
         }
@@ -102,9 +113,13 @@ private fun LocationOptions(
             Icon(
                 imageVector = Icons.Default.MyLocation,
                 contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
+                modifier = Modifier.padding(end = 8.dp),
+                tint = CustomTheme.colors.black
             )
-            Text("Использовать мое местоположение")
+            Text(
+                "Взять мое местоположение",
+                color = CustomTheme.colors.black
+            )
         }
     }
 }
