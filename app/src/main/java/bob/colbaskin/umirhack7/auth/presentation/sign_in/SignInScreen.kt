@@ -112,11 +112,10 @@ private fun SignInScreen(
 
             Column {
                 OutlinedTextField(
-                    value = state.username,
+                    value = state.userName,
                     onValueChange = { onAction(SignInAction.UpdateUserName(it)) },
                     label = { Text("Юзернейм") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                    isError = !state.isNameValid,
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.getColors()
@@ -148,7 +147,7 @@ private fun SignInScreen(
                 Button(
                     onClick = { onAction(SignInAction.SignIn) },
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = !state.isLoading,
+                    enabled = state.isFormValid,
                     colors = ButtonDefaults.getColors()
                 ) {
                     if (state.isLoading) {

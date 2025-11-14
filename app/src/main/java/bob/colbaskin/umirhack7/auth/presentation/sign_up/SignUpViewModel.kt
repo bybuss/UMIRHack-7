@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
-import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -44,7 +43,7 @@ class SignUpViewModel @Inject constructor(
             ).toUiState()
 
             state = state.copy(
-                authState = UiState.Success(Unit)/* response */,
+                authState = response,
                 isLoading = false
             )
         }

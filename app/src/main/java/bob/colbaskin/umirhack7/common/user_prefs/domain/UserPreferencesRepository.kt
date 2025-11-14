@@ -17,6 +17,7 @@ interface UserPreferencesRepository {
     fun getUser(): Flow<User>
 
     suspend fun saveUserInfo(
+        userId: String,
         username: String,
         email: String,
         firstName: String,
