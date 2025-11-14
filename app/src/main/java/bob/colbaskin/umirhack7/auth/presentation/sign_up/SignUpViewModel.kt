@@ -23,8 +23,11 @@ class SignUpViewModel @Inject constructor(
     fun onAction(action: SignUpAction) {
         when (action) {
             SignUpAction.SignUp -> register()
+            is SignUpAction.UpdateUserName -> updateUserName(action.userName)
             is SignUpAction.UpdateEmail -> updateEmail(action.email)
             is SignUpAction.UpdatePassword -> updatePassword(action.password)
+            is SignUpAction.UpdateFirstname -> updateFirstName(action.firstName)
+            is SignUpAction.UpdateLastName -> updateLastName(action.lastName)
             else -> Unit
         }
     }
@@ -47,11 +50,23 @@ class SignUpViewModel @Inject constructor(
         }
     }
 
+    private fun updateUserName(userName: String) {
+        state = state.copy(userName = userName)
+    }
+
     private fun updateEmail(email: String) {
         state = state.copy(email = email)
     }
 
     private fun updatePassword(password: String) {
         state = state.copy(password = password)
+    }
+
+    private fun updateFirstName(firstName: String) {
+        state = state.copy(firstName = firstName)
+    }
+
+    private fun updateLastName(lastName: String) {
+        state = state.copy(lastName = lastName)
     }
 }

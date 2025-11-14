@@ -156,7 +156,10 @@ private fun SignInScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     } else {
-                        Text("Войти")
+                        Text(
+                            "Войти",
+                            color = CustomTheme.colors.black
+                        )
                     }
                 }
                 TextButton(

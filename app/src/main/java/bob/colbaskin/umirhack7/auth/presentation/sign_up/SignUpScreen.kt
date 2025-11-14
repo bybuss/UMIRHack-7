@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import bob.colbaskin.umirhack7.common.UiState
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
 import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.common.design_system.utils.getTextButtonColors
 import bob.colbaskin.umirhack7.navigation.Screens
@@ -110,7 +111,7 @@ private fun SignUpScreen(
             Column {
                 OutlinedTextField(
                     value = state.userName,
-                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    onValueChange = { onAction(SignUpAction.UpdateUserName(it)) },
                     label = { Text("Юзернейм") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     modifier = Modifier.fillMaxWidth(),
@@ -151,7 +152,7 @@ private fun SignUpScreen(
                 )
                 OutlinedTextField(
                     value = state.firstName,
-                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    onValueChange = { onAction(SignUpAction.UpdateFirstname(it)) },
                     label = { Text("Имя") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     modifier = Modifier.fillMaxWidth(),
@@ -160,7 +161,7 @@ private fun SignUpScreen(
                 )
                 OutlinedTextField(
                     value = state.lastName,
-                    onValueChange = { onAction(SignUpAction.UpdateEmail(it)) },
+                    onValueChange = { onAction(SignUpAction.UpdateLastName(it)) },
                     label = { Text("Фамилия") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     modifier = Modifier.fillMaxWidth(),
@@ -180,7 +181,10 @@ private fun SignUpScreen(
                             modifier = Modifier.size(20.dp)
                         )
                     } else {
-                        Text("Зарегистрироваться")
+                        Text(
+                            "Зарегистрироваться",
+                            color = CustomTheme.colors.black
+                        )
                     }
                 }
                 TextButton(
