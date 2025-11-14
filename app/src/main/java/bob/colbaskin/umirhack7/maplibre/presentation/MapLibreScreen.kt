@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,6 +20,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import bob.colbaskin.umirhack7.common.UiState
 import bob.colbaskin.umirhack7.common.design_system.LoadingScreen
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.presentation.components.FieldInfoCard
@@ -98,7 +101,11 @@ private fun MapLibreScreen(
     state: MapLibreState,
     onAction: (MapLibreAction) -> Unit
 ) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        contentColor = CustomTheme.colors.black,
+        color = CustomTheme.colors.white
+    ) {
         if (state.showRegionSuggestion) {
             AlertDialog(
                 onDismissRequest = { onAction(MapLibreAction.DismissRegionSuggestion) },
@@ -108,18 +115,25 @@ private fun MapLibreScreen(
                 },
                 confirmButton = {
                     Button(
-                        onClick = { onAction(MapLibreAction.DownloadCurrentRegion) }
+                        onClick = { onAction(MapLibreAction.DownloadCurrentRegion) },
+                        colors = ButtonDefaults.getColors()
                     ) {
                         Text("Скачать")
                     }
                 },
                 dismissButton = {
                     Button(
-                        onClick = { onAction(MapLibreAction.DismissRegionSuggestion) }
+                        onClick = { onAction(MapLibreAction.DismissRegionSuggestion) },
+                        colors = ButtonDefaults.getColors()
                     ) {
                         Text("Не сейчас")
                     }
-                }
+                },
+                containerColor = CustomTheme.colors.white,
+                textContentColor = CustomTheme.colors.black,
+                titleContentColor = CustomTheme.colors.black,
+                iconContentColor = CustomTheme.colors.black
+
             )
         }
 
@@ -176,7 +190,9 @@ private fun MapContentScreen(
                     state = state,
                     onAction = onAction
                 )
-            }
+            },
+            contentColor = CustomTheme.colors.black,
+            containerColor = CustomTheme.colors.white
         ) { innerPadding ->
             Box(
                 modifier = Modifier

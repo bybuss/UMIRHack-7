@@ -7,7 +7,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 @Composable
 fun UMIRHack7Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colors = if (darkTheme) darkColors else lightColors

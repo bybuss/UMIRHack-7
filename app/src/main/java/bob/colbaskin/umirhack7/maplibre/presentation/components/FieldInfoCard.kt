@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -29,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreAction
 
@@ -41,7 +44,8 @@ fun FieldInfoCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        colors = CardDefaults.getColors()
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -62,7 +66,8 @@ fun FieldInfoCard(
                     Text(
                         text = field.name,
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
                     )
                 }
                 IconButton(
@@ -77,15 +82,23 @@ fun FieldInfoCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = "Площадь: ${"%.2f".format(field.area / 10000)} га")
-            Text(text = "Количество зон: ${field.zones.size}")
+            Text(
+                text = "Площадь: ${"%.2f".format(field.area / 10000)} га",
+                color = CustomTheme.colors.black
+            )
+            Text(
+                text = "Количество зон: ${field.zones.size}",
+                color = CustomTheme.colors.black
+            )
 
             Button(
                 onClick = { onAction(MapLibreAction.NavigateToFieldDetails(field.id)) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.getColors()
             ) {
                 Text(
-                    text = "Подробнее"
+                    text = "Подробнее",
+                    color = CustomTheme.colors.black
                 )
             }
         }
