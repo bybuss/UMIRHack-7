@@ -14,13 +14,13 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
 
 @Composable
 fun PagerWithIndicator(
@@ -74,9 +74,9 @@ private fun PagerIndicator(
                 label = "widthAnimation",
             )
             val color = if (isSelected) {
-                MaterialTheme.colorScheme.primary
+                CustomTheme.colors.main
             } else {
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                CustomTheme.colors.main.copy(alpha = 0.3f)
             }
 
             Box(

@@ -9,8 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +22,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 
 @Composable
 fun AnalysisFieldWithHint(
@@ -39,12 +43,14 @@ fun AnalysisFieldWithHint(
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                color = CustomTheme.colors.black
             )
 
             IconButton(
                 onClick = { showHint = !showHint },
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp),
+                colors = IconButtonDefaults.getColors()
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Help,
@@ -57,15 +63,16 @@ fun AnalysisFieldWithHint(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.getColors()
         )
 
         if (showHint) {
             Text(
                 text = hint,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp)
+                modifier = Modifier.padding(top = 4.dp),
+                color = CustomTheme.colors.black
             )
         }
     }

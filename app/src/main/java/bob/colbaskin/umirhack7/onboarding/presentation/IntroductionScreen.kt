@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,6 +24,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import bob.colbaskin.umirhack7.R
 import bob.colbaskin.umirhack7.common.design_system.Lottie
 import bob.colbaskin.umirhack7.common.design_system.PagerWithIndicator
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
+import bob.colbaskin.umirhack7.common.design_system.utils.getTextButtonColors
 import kotlinx.coroutines.launch
 
 @Composable
@@ -81,7 +85,8 @@ private fun OnBoarding(
                     text = page.title,
                     style = MaterialTheme.typography.headlineSmall,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = CustomTheme.colors.black
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -90,7 +95,8 @@ private fun OnBoarding(
                     text = page.description,
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = CustomTheme.colors.black
                 )
             }
         }
@@ -105,9 +111,13 @@ private fun OnBoarding(
                         onNextScreen()
                     }
                 }
-            }
+            },
+            colors = ButtonDefaults.getColors()
         ) {
-            Text(text = buttonText)
+            Text(
+                text = buttonText,
+                color = CustomTheme.colors.black
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -117,8 +127,12 @@ private fun OnBoarding(
                 dispatch(OnBoardingAction.OnboardingComplete)
                 onNextScreen()
             },
+            colors = ButtonDefaults.getTextButtonColors()
         ) {
-            Text(text = "Пропустить")
+            Text(
+                text = "Пропустить",
+                color = CustomTheme.colors.black
+            )
         }
     }
 }

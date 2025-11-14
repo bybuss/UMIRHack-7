@@ -11,6 +11,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,14 +24,16 @@ fun PointPickerTopBar(
         title = {
             Text(
                 text = "Выбор точки измерения",
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                color = CustomTheme.colors.black
             )
         },
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Назад"
+                    contentDescription = "Назад",
+                    tint = CustomTheme.colors.black
                 )
             }
         },
@@ -37,13 +41,11 @@ fun PointPickerTopBar(
             IconButton(onClick = onUseCurrentLocation) {
                 Icon(
                     imageVector = Icons.Default.MyLocation,
-                    contentDescription = "Мое местоположение"
+                    contentDescription = "Мое местоположение",
+                    tint = CustomTheme.colors.black
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        )
+        colors = TopAppBarDefaults.getColors()
     )
 }

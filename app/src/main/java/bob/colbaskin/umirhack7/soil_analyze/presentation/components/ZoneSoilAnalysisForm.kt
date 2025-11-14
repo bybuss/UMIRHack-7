@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
 import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
 import bob.colbaskin.umirhack7.soil_analyze.presentation.SoilAnalyzeAction
 import bob.colbaskin.umirhack7.soil_analyze.presentation.ZoneLocationAction
@@ -35,7 +36,7 @@ fun ZoneSoilAnalysisForm(
             Text(
                 text = "Координаты: ${"%.6f".format(point.latitude)}, ${"%.6f".format(point.longitude)}",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = CustomTheme.colors.black
             )
         }
 

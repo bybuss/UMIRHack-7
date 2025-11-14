@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.models.Zone
 import bob.colbaskin.umirhack7.maplibre.utils.MapLibreConstants.MAP_STYLE_URL
@@ -65,7 +66,9 @@ fun PointPickerScreen(
                 },
                 onCancel = onBack
             )
-        }
+        },
+        contentColor = CustomTheme.colors.black,
+        containerColor = CustomTheme.colors.white,
     ) { innerPadding ->
         Box(
             modifier = Modifier

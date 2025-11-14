@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import org.maplibre.android.geometry.LatLng
 
 @Composable
@@ -31,7 +34,8 @@ fun ZoneSubmitButton(
 
     Card(
         modifier = modifier,
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.getColors()
     ) {
         Column(
             modifier = Modifier
@@ -46,21 +50,27 @@ fun ZoneSubmitButton(
                     CircularProgressIndicator(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    Text("Отправка данных...")
+                    Text(
+                        "Отправка данных...",
+                        color = CustomTheme.colors.black
+                    )
                 }
             } else if (submitSuccess) {
                 Text(
                     text = "Данные успешно отправлены!",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = CustomTheme.colors.black
                 )
             } else {
                 Button(
                     onClick = onAction,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = isButtonEnabled
+                    enabled = isButtonEnabled,
+                    colors = ButtonDefaults.getColors()
                 ) {
-                    Text("Отправить анализ почвы")
+                    Text(
+                        "Отправить анализ почвы"
+                    )
                 }
 
                 if (!isButtonEnabled) {
@@ -72,7 +82,7 @@ fun ZoneSubmitButton(
                             else -> "Невозможно отправить анализ"
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = CustomTheme.colors.black
                     )
                 }
 
@@ -81,7 +91,7 @@ fun ZoneSubmitButton(
                     Text(
                         text = error,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = CustomTheme.colors.red
                     )
                 }
             }

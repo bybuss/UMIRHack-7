@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -19,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,28 +48,29 @@ fun SoilAnalyzeTopBar(
                     Text(
                         text = field.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = CustomTheme.colors.black
                     )
                     Text(
                         text = "Площадь: ${"%.2f".format(field.area / 10000)} га",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = CustomTheme.colors.gray
                     )
                 }
             }
         },
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                colors = IconButtonDefaults.getColors()
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Назад"
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        ),
+        colors = TopAppBarDefaults.getColors(),
         modifier = modifier
     )
 }

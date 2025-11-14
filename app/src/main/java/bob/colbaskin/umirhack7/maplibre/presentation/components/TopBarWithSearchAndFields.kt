@@ -1,5 +1,6 @@
 package bob.colbaskin.umirhack7.maplibre.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -56,6 +59,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bob.colbaskin.umirhack7.common.UiState
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 import bob.colbaskin.umirhack7.maplibre.domain.models.Field
 import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreAction
 import bob.colbaskin.umirhack7.maplibre.presentation.MapLibreState
@@ -149,8 +154,8 @@ private fun SearchTextField(
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .background(Color.White, RoundedCornerShape(8.dp))
-            .border(1.dp, Color(0xFFCBCBCB), RoundedCornerShape(8.dp))
+            .background(CustomTheme.colors.white, RoundedCornerShape(8.dp))
+            .border(1.dp, CustomTheme.colors.black, RoundedCornerShape(8.dp))
             .clickable {
                 focusRequester.requestFocus()
                 keyboardController?.show()
@@ -165,7 +170,7 @@ private fun SearchTextField(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Поиск",
-                tint = Color(0xFF878787),
+                tint = CustomTheme.colors.black,
                 modifier = Modifier
                     .size(20.dp)
                     .clickable {
@@ -195,7 +200,7 @@ private fun SearchTextField(
                         }
                     ),
                     textStyle = LocalTextStyle.current.copy(
-                        color = Color(0xFF101828),
+                        color = CustomTheme.colors.black,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Normal
                     ),
@@ -203,13 +208,13 @@ private fun SearchTextField(
                         if (textFieldValue.text.isEmpty()) {
                             Text(
                                 "Поиск полей...",
-                                color = Color(0xFF878787),
+                                color = CustomTheme.colors.white,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Normal
                             )
                         }
                         innerTextField()
-                    }
+                    },
                 )
             }
 
@@ -217,7 +222,7 @@ private fun SearchTextField(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Очистить поиск",
-                    tint = Color(0xFF878787),
+                    tint = CustomTheme.colors.gray,
                     modifier = Modifier
                         .size(20.dp)
                         .clickable {
@@ -243,26 +248,29 @@ private fun FieldsDropdownButton(
     Box(
         modifier = Modifier.wrapContentSize(Alignment.TopEnd)
     ) {
-        OutlinedButton(
+        Button (
             onClick = { onExpandedChange(true) },
-            colors = ButtonDefaults.outlinedButtonColors()
+            colors = ButtonDefaults.getColors()
         ) {
             val fieldsCount = (state.fieldsState as? UiState.Success)?.data?.size ?: 0
             Text(
                 text = state.selectedField?.name ?: "Поля ($fieldsCount)",
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = CustomTheme.colors.black
             )
             Icon(
                 imageVector = if (expanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
-                contentDescription = "Список полей"
+                contentDescription = "Список полей",
+                tint = CustomTheme.colors.black
             )
         }
 
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { onExpandedChange(false) },
-            modifier = Modifier.fillMaxWidth(0.7f)
+            modifier = Modifier.fillMaxWidth(0.7f),
+            containerColor = CustomTheme.colors.secondary
         ) {
             DropdownMenuItem(
                 text = { Text("Все поля") },
@@ -317,17 +325,19 @@ private fun FieldsDropdownButton(
                             }
                         }
                     }
-                }
+                },
+                colors = MenuDefaults.getColors()
             )
 
-            HorizontalDivider()
+            HorizontalDivider(color = CustomTheme.colors.black)
 
             when (val fieldsState = state.fieldsState) {
                 is UiState.Success -> {
                     if (fieldsState.data.isEmpty()) {
                         DropdownMenuItem(
                             text = { Text("Нет полей", color = Color.Gray) },
-                            onClick = {}
+                            onClick = {},
+                            colors = MenuDefaults.getColors()
                         )
                     } else {
                         fieldsState.data.forEach { field ->
@@ -348,7 +358,8 @@ private fun FieldsDropdownButton(
                                 onClick = {
                                     onAction(MapLibreAction.SelectField(field))
                                     onExpandedChange(false)
-                                }
+                                },
+                                colors = MenuDefaults.getColors()
                             )
                         }
                     }
@@ -364,7 +375,8 @@ private fun FieldsDropdownButton(
                                 Text("Загрузка полей...")
                             }
                         },
-                        onClick = {}
+                        onClick = {},
+                        colors = MenuDefaults.getColors()
                     )
                 }
                 is UiState.Error -> {
@@ -380,7 +392,8 @@ private fun FieldsDropdownButton(
                         },
                         onClick = {
                             onAction(MapLibreAction.LoadFields)
-                        }
+                        },
+                        colors = MenuDefaults.getColors()
                     )
                 }
             }
@@ -406,17 +419,19 @@ private fun SearchResultsDropdownMenu(
             text = {
                 Text("Результаты поиска (${searchResults.size})")
             },
-            onClick = {}
+            onClick = {},
+            colors = MenuDefaults.getColors()
         )
 
-        HorizontalDivider()
+        HorizontalDivider(color = CustomTheme.colors.black)
 
         if (searchResults.isEmpty()) {
             DropdownMenuItem(
                 text = {
                     Text("Поля не найдены", color = Color.Gray)
                 },
-                onClick = {}
+                onClick = {},
+                colors = MenuDefaults.getColors()
             )
         } else {
             searchResults.forEach { field ->
@@ -434,7 +449,8 @@ private fun SearchResultsDropdownMenu(
                             )
                         }
                     },
-                    onClick = { onFieldSelected(field) }
+                    onClick = { onFieldSelected(field) },
+                    colors = MenuDefaults.getColors()
                 )
             }
         }

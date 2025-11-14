@@ -69,6 +69,7 @@ roomPaging = "2.7.1"
 
 # Compose Icons
 composeIcons = "1.1.1"
+composeMaterial3 = "1.5.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -147,6 +148,7 @@ androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "ro
 
 # Compose Icons
 composeIcons-tablerIcons = { module = "br.com.devsrsouza.compose.icons:tabler-icons", version.ref = "composeIcons" }
+androidx-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "composeMaterial3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

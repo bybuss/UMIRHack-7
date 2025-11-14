@@ -6,12 +6,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 
 @Composable
 fun PointPickerBottomBar(
@@ -20,7 +21,9 @@ fun PointPickerBottomBar(
     onCancel: () -> Unit
 ) {
     Surface(
-        tonalElevation = 8.dp
+        tonalElevation = 8.dp,
+        contentColor = CustomTheme.colors.black,
+        color = CustomTheme.colors.white
     ) {
         Row(
             modifier = Modifier
@@ -31,9 +34,7 @@ fun PointPickerBottomBar(
             Button(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                colors = ButtonDefaults.getColors()
             ) {
                 Text("Назад")
             }
@@ -41,9 +42,13 @@ fun PointPickerBottomBar(
             Button(
                 onClick = onConfirm,
                 modifier = Modifier.weight(1f),
-                enabled = isValid
+                enabled = isValid,
+                colors = ButtonDefaults.getColors()
             ) {
-                Text("Подтвердить")
+                Text(
+                    "Подтвердить",
+                    color = CustomTheme.colors.black
+                )
             }
         }
     }

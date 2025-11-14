@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import bob.colbaskin.umirhack7.R
+import bob.colbaskin.umirhack7.common.design_system.theme.CustomTheme
+import bob.colbaskin.umirhack7.common.design_system.utils.getColors
 
 @Composable
 fun WelcomeScreen(
@@ -54,7 +57,8 @@ fun Welcome(
         Text(
             text = "Agro Hub",
             style = MaterialTheme.typography.headlineLarge,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = CustomTheme.colors.black
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -62,7 +66,8 @@ fun Welcome(
         Text(
             text = "Ваш цифровой помощник для умного севооборота и планирования урожая. Повышаем плодородие почвы и вашу прибыль.",
             style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            color = CustomTheme.colors.black
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -71,9 +76,13 @@ fun Welcome(
             onClick = {
                 dispatch(OnBoardingAction.OnboardingInProgress)
                 onNextScreen()
-            }
+            },
+            colors = ButtonDefaults.getColors()
         ) {
-            Text("Начать")
+            Text(
+                "Начать",
+                color = CustomTheme.colors.black
+            )
         }
     }
 }
