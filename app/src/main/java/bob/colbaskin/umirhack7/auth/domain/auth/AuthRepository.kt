@@ -13,4 +13,11 @@ interface AuthRepository {
         firstName: String,
         lastName: String
     ): ApiResult<Unit>
+
+    suspend fun getMeAndSave(): ApiResult<Unit>
+
+    suspend fun createOrganization(
+        userId: String,
+        name: String
+    ): ApiResult<Unit>
 }

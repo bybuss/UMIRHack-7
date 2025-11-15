@@ -1,10 +1,13 @@
 package bob.colbaskin.umirhack7.auth.data
 
 import android.util.Log
+import bob.colbaskin.umirhack7.auth.data.models.CreateOrganizationBody
+import bob.colbaskin.umirhack7.auth.data.models.GetMeFullDTO
 import bob.colbaskin.umirhack7.auth.data.models.LoginBody
 import bob.colbaskin.umirhack7.auth.data.models.RegisterBody
 import bob.colbaskin.umirhack7.auth.data.models.RegisterDTO
 import bob.colbaskin.umirhack7.auth.data.models.TokenDTO
+import bob.colbaskin.umirhack7.auth.data.models.toDomain
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthApiService
 import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
 import bob.colbaskin.umirhack7.common.ApiResult
@@ -36,13 +39,13 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             },
             successHandler = { response ->
-                Log.d(TAG, "Login successful. Saving Authenticated status")
+                Log.d(TAG, "Login successful. Saving Authenticated status + user")
                 userPreferences.saveAuthStatus(AuthConfig.AUTHENTICATED)
                 tokenManager.saveTokens(
                     accessToken = response.accessToken,
                     refreshToken = response.refreshToken
                 )
-                response
+                getMeAndSave()
             }
         )
     }
@@ -81,6 +84,44 @@ class AuthRepositoryImpl @Inject constructor(
                     password = password
                 )
                 response
+            }
+        )
+    }
+
+    override suspend fun getMeAndSave(): ApiResult<Unit> {
+        Log.d(TAG, "Attempting getMe")
+        return safeApiCall<GetMeFullDTO, Unit>(
+            apiCall = { authApi.getMe() },
+            successHandler = { response ->
+                val user = response.toDomain()
+                Log.d(TAG, "getMe successful. Saving user=$user")
+                userPreferences.saveUserInfo(
+                    userId = user.userId,
+                    username = user.username,
+                    email = user.email,
+                    firstName = user.firstName,
+                    lastName = user.lastName
+                )
+            }
+        )
+    }
+
+    override suspend fun createOrganization(
+        userId: String,
+        name: String
+    ): ApiResult<Unit> {
+        Log.d(TAG, "Attempting create org with name=$name")
+        return safeApiCall<Unit, Unit>(
+            apiCall = {
+                authApi.createOrganization(
+                    userId = userId,
+                    body = CreateOrganizationBody(
+                        name = name
+                    )
+                )
+            },
+            successHandler = { response ->
+                Log.d(TAG, "Create org successful.")
             }
         )
     }

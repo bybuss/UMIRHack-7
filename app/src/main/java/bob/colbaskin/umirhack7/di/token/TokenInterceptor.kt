@@ -17,7 +17,8 @@ class TokenInterceptor @Inject constructor(
         Log.d(TAG, "Request to: ${request.url}")
         Log.d(TAG, "Headers: ${request.headers}")
 
-        if (request.url.encodedPath == "/api/auth/refresh") {
+        if (request.url.encodedPath == "/api/auth/refresh" ||
+            request.url.encodedPath == "/api/organization/create") {
             return chain.proceed(request)
         }
 
