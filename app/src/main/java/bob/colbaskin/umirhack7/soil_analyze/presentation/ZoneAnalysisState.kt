@@ -11,5 +11,6 @@ data class ZoneAnalysisState(
     val submitError: String? = null,
     val submitSuccess: Boolean = false,
     val showLocationOptions: Boolean = false,
-    val validationErrors: Map<String, String> = emptyMap()
+    val validationErrors: Map<String, String> = emptyMap(),
+    val offlineMessage: String? = null
 )

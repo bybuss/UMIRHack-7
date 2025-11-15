@@ -109,7 +109,7 @@ class MapDownloadService : Service() {
         }
 
         val notification = buildProgressNotification(
-            title = "Загрузка региона $regionName",
+            title = "Загрузка региона $regionName.\nКарта может не прогружаться на время загрузки!",
             text = "$text ($progress%)",
             progress = progress,
             indeterminate = false,

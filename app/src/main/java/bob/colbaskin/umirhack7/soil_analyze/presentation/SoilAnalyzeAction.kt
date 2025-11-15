@@ -16,4 +16,5 @@ sealed interface SoilAnalyzeAction {
     data class UseCurrentLocationForZone(val zoneId: Int) : SoilAnalyzeAction
     data class OpenMapForZone(val zoneId: Int) : SoilAnalyzeAction
     data class ClearZoneLocationError(val zoneId: Int) : SoilAnalyzeAction
+    object SyncPendingAnalyses : SoilAnalyzeAction
 }

@@ -7,6 +7,8 @@ import bob.colbaskin.umirhack7.maplibre.data.local.FieldsDatabase
 import bob.colbaskin.umirhack7.maplibre.data.local.dao.FieldDao
 import bob.colbaskin.umirhack7.maplibre.data.local.dao.ZoneDao
 import bob.colbaskin.umirhack7.maplibre.data.sync.SyncManager
+import bob.colbaskin.umirhack7.soil_analyze.data.local.SoilAnalysisDatabase
+import bob.colbaskin.umirhack7.soil_analyze.data.local.dao.SoilAnalysisQueueDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,5 +52,17 @@ object LocalModule {
     @Singleton
     fun provideSyncManager(@ApplicationContext context: Context): SyncManager {
         return SyncManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilAnalysisDatabase(@ApplicationContext context: Context): SoilAnalysisDatabase {
+        return SoilAnalysisDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilAnalysisQueueDao(database: SoilAnalysisDatabase): SoilAnalysisQueueDao {
+        return database.soilAnalysisQueueDao()
     }
 }

@@ -1,25 +1,34 @@
 package bob.colbaskin.umirhack7.soil_analyze.presentation
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.UiState
-import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.point_picker.domain.PointInPolygonChecker
+import bob.colbaskin.umirhack7.soil_analyze.data.SoilAnalysisSyncWorker
 import bob.colbaskin.umirhack7.soil_analyze.data.models.toAnalysisLocation
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilAnalysisNotificationRepository
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilRepository
 import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
 import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
 import bob.colbaskin.umirhack7.soil_analyze.utils.SoilAnalysisValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.first
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 private const val TAG = "Soil"
@@ -29,11 +38,19 @@ class SoilAnalyzeViewModel @Inject constructor(
     private val fieldsRepository: FieldsRepository,
     private val locationClient: LocationClient,
     private val pointInPolygonChecker: PointInPolygonChecker,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val soilRepository: SoilRepository,
+    private val notificationRepository: SoilAnalysisNotificationRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     var state by mutableStateOf(SoilAnalyzeState())
         private set
+
+    init {
+        viewModelScope.launch {
+            syncPendingAnalyses()
+        }
+    }
 
     fun onAction(action: SoilAnalyzeAction) {
         when (action) {
@@ -49,6 +66,7 @@ class SoilAnalyzeViewModel @Inject constructor(
             is SoilAnalyzeAction.UseCurrentLocationForZone -> useCurrentLocationForZone(action.zoneId)
             is SoilAnalyzeAction.OpenMapForZone -> openMapForZone(action.zoneId)
             is SoilAnalyzeAction.ClearZoneLocationError -> clearZoneLocationError(action.zoneId)
+            SoilAnalyzeAction.SyncPendingAnalyses -> syncPendingAnalyses()
         }
     }
 
@@ -112,29 +130,61 @@ class SoilAnalyzeViewModel @Inject constructor(
                 val analysisData = zoneState.soilAnalysisData.copy(
                     location = zoneState.measurementPoint.toAnalysisLocation()
                 )
-                val userId = userPreferencesRepository.getUser().first().userId
 
-                Log.d(TAG, "submitZoneAnalysis: Data prepared for userId=$userId, zone $zoneId - $analysisData")
+                Log.d(TAG, "submitZoneAnalysis: Data prepared for zone $zoneId - $analysisData")
 
-                kotlinx.coroutines.delay(1000)
+                val result = soilRepository.createReport(analysisData)
 
-                val successState = zoneState.copy(
-                    isSubmitting = false,
-                    submitSuccess = true,
-                    submitError = null,
-                    validationErrors = emptyMap()
-                )
-                state = state.updateZoneAnalysisState(zoneId, successState)
+                when (result) {
+                    is ApiResult.Success -> {
+                        val field = (state.fieldDetailState as? UiState.Success)?.data
+                        val zone = field?.zones?.find { it.id == zoneId }
 
-                Log.d(TAG, "submitZoneAnalysis: Analysis submitted successfully for zone $zoneId")
+                        notificationRepository.showQueuedNotification(zone?.name ?: "зона $zoneId")
 
-                kotlinx.coroutines.delay(500)
-                state = state.copy(expandedZoneId = null)
-                state = state.updateZoneAnalysisState(zoneId, ZoneAnalysisState(
-                    soilAnalysisData = SoilAnalysisData(),
-                    measurementPoint = null,
-                    submitSuccess = true
-                ))
+                        val successState = zoneState.copy(
+                            isSubmitting = false,
+                            submitSuccess = true,
+                            submitError = null,
+                            validationErrors = emptyMap(),
+                            offlineMessage = "Анализ поставлен в очередь на отправку"
+                        )
+                        state = state.updateZoneAnalysisState(zoneId, successState)
+
+                        Log.d(TAG, "submitZoneAnalysis: Analysis queued successfully for zone $zoneId")
+
+                        viewModelScope.launch {
+                            try {
+                                val syncResult = soilRepository.syncPendingReports()
+                                if (syncResult is ApiResult.Success) {
+                                    Log.d(TAG, "Background sync completed successfully")
+                                } else {
+                                    Log.w(TAG, "Background sync completed with errors, but analysis is queued")
+                                }
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Background sync failed", e)
+                            }
+                        }
+
+                        kotlinx.coroutines.delay(2000)
+                        state = state.copy(expandedZoneId = null)
+
+                        state = state.updateZoneAnalysisState(zoneId, ZoneAnalysisState(
+                            soilAnalysisData = SoilAnalysisData(),
+                            measurementPoint = null,
+                            submitSuccess = true,
+                            offlineMessage = "Анализ в очереди на отправку"
+                        ))
+                    }
+                    is ApiResult.Error -> {
+                        Log.e(TAG, "submitZoneAnalysis: Error queuing analysis for zone $zoneId: ${result.text}")
+                        val errorState = zoneState.copy(
+                            isSubmitting = false,
+                            submitError = "Ошибка сохранения анализа: ${result.text}"
+                        )
+                        state = state.updateZoneAnalysisState(zoneId, errorState)
+                    }
+                }
 
             } catch (e: Exception) {
                 Log.e(TAG, "submitZoneAnalysis: Error submitting analysis for zone $zoneId", e)
@@ -144,6 +194,13 @@ class SoilAnalyzeViewModel @Inject constructor(
                 )
                 state = state.updateZoneAnalysisState(zoneId, errorState)
             }
+        }
+    }
+
+    private fun syncPendingAnalyses() {
+        Log.d(TAG, "syncPendingAnalyses: Starting synchronization of pending analyses")
+        viewModelScope.launch {
+            soilRepository.syncPendingReports()
         }
     }
 

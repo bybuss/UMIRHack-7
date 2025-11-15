@@ -18,5 +18,5 @@ data class CreateReportBody(
 @Serializable
 data class Location(
     val type: String,
-    val coordinates: List<String>
+    val coordinates: List<Double>
 )

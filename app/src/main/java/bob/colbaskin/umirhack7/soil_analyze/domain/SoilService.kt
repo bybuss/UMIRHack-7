@@ -10,7 +10,7 @@ interface SoilService {
 
     @PUT("/api/ground/create")
     suspend fun createReport(
-        @Header("") userId: String,
+        @Header("x-user-id") userId: String,
         @Body body: CreateReportBody
     ): Response<Unit>
 }

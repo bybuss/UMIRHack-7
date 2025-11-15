@@ -27,7 +27,12 @@ import bob.colbaskin.umirhack7.point_picker.data.ZoneRepositoryImpl
 import bob.colbaskin.umirhack7.point_picker.domain.ZoneRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
+import bob.colbaskin.umirhack7.soil_analyze.data.SoilAnalysisNotificationRepositoryImpl
+import bob.colbaskin.umirhack7.soil_analyze.data.SoilAnalysisQueueRepositoryImpl
 import bob.colbaskin.umirhack7.soil_analyze.data.SoilRepositoryImpl
+import bob.colbaskin.umirhack7.soil_analyze.data.local.SoilAnalysisDatabase
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilAnalysisNotificationRepository
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilAnalysisQueueRepository
 import bob.colbaskin.umirhack7.soil_analyze.domain.SoilRepository
 import bob.colbaskin.umirhack7.soil_analyze.domain.SoilService
 import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
@@ -168,7 +173,24 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideSoilRepository(soilApi: SoilService): SoilRepository {
-        return SoilRepositoryImpl(soilApi)
+    fun provideSoilAnalysisQueueRepository(db: SoilAnalysisDatabase): SoilAnalysisQueueRepository {
+        return SoilAnalysisQueueRepositoryImpl(db)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilRepository(
+        soilApi: SoilService,
+        queueRepository: SoilAnalysisQueueRepository
+    ): SoilRepository {
+        return SoilRepositoryImpl(soilApi, queueRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilAnalysisNotificationRepository(
+        @ApplicationContext context: Context
+    ): SoilAnalysisNotificationRepository {
+        return SoilAnalysisNotificationRepositoryImpl(context)
     }
 }
