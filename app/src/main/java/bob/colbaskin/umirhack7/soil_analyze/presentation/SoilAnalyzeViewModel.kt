@@ -8,13 +8,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bob.colbaskin.umirhack7.common.ApiResult
 import bob.colbaskin.umirhack7.common.UiState
+import bob.colbaskin.umirhack7.common.user_prefs.domain.UserPreferencesRepository
 import bob.colbaskin.umirhack7.maplibre.data.models.toLatLngList
 import bob.colbaskin.umirhack7.maplibre.domain.fields.FieldsRepository
 import bob.colbaskin.umirhack7.point_picker.domain.PointInPolygonChecker
 import bob.colbaskin.umirhack7.soil_analyze.data.models.toAnalysisLocation
 import bob.colbaskin.umirhack7.soil_analyze.domain.models.SoilAnalysisData
 import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
+import bob.colbaskin.umirhack7.soil_analyze.utils.SoilAnalysisValidator
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.maplibre.android.geometry.LatLng
 import javax.inject.Inject
@@ -25,7 +28,8 @@ private const val TAG = "Soil"
 class SoilAnalyzeViewModel @Inject constructor(
     private val fieldsRepository: FieldsRepository,
     private val locationClient: LocationClient,
-    private val pointInPolygonChecker: PointInPolygonChecker
+    private val pointInPolygonChecker: PointInPolygonChecker,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     var state by mutableStateOf(SoilAnalyzeState())
@@ -51,7 +55,16 @@ class SoilAnalyzeViewModel @Inject constructor(
     private fun updateZoneSoilAnalysisData(zoneId: Int, data: SoilAnalysisData) {
         Log.d(TAG, "updateZoneSoilAnalysisData: Zone $zoneId - $data")
         val currentState = state.getZoneAnalysisState(zoneId)
-        state = state.updateZoneAnalysisState(zoneId, currentState.copy(soilAnalysisData = data))
+
+        val validationResult = SoilAnalysisValidator.validate(data)
+
+        state = state.updateZoneAnalysisState(
+            zoneId,
+            currentState.copy(
+                soilAnalysisData = data,
+                validationErrors = validationResult.errors
+            )
+        )
     }
 
     private fun updateZoneMeasurementPoint(zoneId: Int, point: LatLng) {
@@ -77,7 +90,21 @@ class SoilAnalyzeViewModel @Inject constructor(
             return
         }
 
-        val updatedState = zoneState.copy(isSubmitting = true, submitError = null)
+        val validationResult = SoilAnalysisValidator.validate(zoneState.soilAnalysisData)
+        if (!validationResult.isValid) {
+            val updatedState = zoneState.copy(
+                validationErrors = validationResult.errors,
+                submitError = "Пожалуйста, исправьте ошибки в форме"
+            )
+            state = state.updateZoneAnalysisState(zoneId, updatedState)
+            return
+        }
+
+        val updatedState = zoneState.copy(
+            isSubmitting = true,
+            submitError = null,
+            validationErrors = emptyMap()
+        )
         state = state.updateZoneAnalysisState(zoneId, updatedState)
 
         viewModelScope.launch {
@@ -85,15 +112,17 @@ class SoilAnalyzeViewModel @Inject constructor(
                 val analysisData = zoneState.soilAnalysisData.copy(
                     location = zoneState.measurementPoint.toAnalysisLocation()
                 )
+                val userId = userPreferencesRepository.getUser().first().userId
 
-                Log.d(TAG, "submitZoneAnalysis: Data prepared for zone $zoneId - $analysisData")
+                Log.d(TAG, "submitZoneAnalysis: Data prepared for userId=$userId, zone $zoneId - $analysisData")
 
                 kotlinx.coroutines.delay(1000)
 
                 val successState = zoneState.copy(
                     isSubmitting = false,
                     submitSuccess = true,
-                    submitError = null
+                    submitError = null,
+                    validationErrors = emptyMap()
                 )
                 state = state.updateZoneAnalysisState(zoneId, successState)
 
@@ -101,6 +130,11 @@ class SoilAnalyzeViewModel @Inject constructor(
 
                 kotlinx.coroutines.delay(500)
                 state = state.copy(expandedZoneId = null)
+                state = state.updateZoneAnalysisState(zoneId, ZoneAnalysisState(
+                    soilAnalysisData = SoilAnalysisData(),
+                    measurementPoint = null,
+                    submitSuccess = true
+                ))
 
             } catch (e: Exception) {
                 Log.e(TAG, "submitZoneAnalysis: Error submitting analysis for zone $zoneId", e)

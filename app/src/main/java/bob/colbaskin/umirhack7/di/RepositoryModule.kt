@@ -27,6 +27,9 @@ import bob.colbaskin.umirhack7.point_picker.data.ZoneRepositoryImpl
 import bob.colbaskin.umirhack7.point_picker.domain.ZoneRepository
 import bob.colbaskin.umirhack7.profile.data.ProfileRepositoryImpl
 import bob.colbaskin.umirhack7.profile.domain.ProfileRepository
+import bob.colbaskin.umirhack7.soil_analyze.data.SoilRepositoryImpl
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilRepository
+import bob.colbaskin.umirhack7.soil_analyze.domain.SoilService
 import bob.colbaskin.umirhack7.soil_analyze.utils.LocationClient
 import dagger.Module
 import dagger.Provides
@@ -155,5 +158,17 @@ object RepositoryModule {
     @Singleton
     fun provideLocationClient(@ApplicationContext context: Context): LocationClient {
         return LocationClient(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilService(retrofit: Retrofit): SoilService {
+        return retrofit.create(SoilService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSoilRepository(soilApi: SoilService): SoilRepository {
+        return SoilRepositoryImpl(soilApi)
     }
 }

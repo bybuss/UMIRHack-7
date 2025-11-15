@@ -3,7 +3,9 @@ package bob.colbaskin.umirhack7.di
 import android.content.Context
 import android.util.Log
 import bob.colbaskin.umirhack7.BuildConfig
+import bob.colbaskin.umirhack7.auth.domain.auth.AuthRepository
 import bob.colbaskin.umirhack7.auth.domain.token.RefreshTokenRepository
+import bob.colbaskin.umirhack7.di.org.OrganizationInterceptor
 import bob.colbaskin.umirhack7.di.token.TokenAuthenticator
 import bob.colbaskin.umirhack7.di.token.TokenInterceptor
 import bob.colbaskin.umirhack7.di.token.TokenManager
@@ -27,7 +29,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
-import java.util.concurrent.TimeUnit
 import javax.inject.Provider
 
 @Module
@@ -45,6 +46,14 @@ object RemoteModule {
     @Singleton
     fun provideTokenInterceptor(tokenManager: TokenManager): TokenInterceptor {
         return TokenInterceptor(tokenManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOrganizationInterceptor(
+        authRepository: Provider<AuthRepository>
+    ): OrganizationInterceptor {
+        return OrganizationInterceptor(authRepository)
     }
 
     @Singleton
@@ -73,6 +82,7 @@ object RemoteModule {
     fun provideOkHttpClient(
         @ApplicationContext context: Context,
         tokenInterceptor: TokenInterceptor,
+        organizationInterceptor: OrganizationInterceptor,
         tokenAuthenticator: Provider<TokenAuthenticator>
     ): OkHttpClient {
         val cookieJar = PersistentCookieJar(
@@ -86,6 +96,7 @@ object RemoteModule {
                 setLevel(HttpLoggingInterceptor.Level.BODY)
             })
             .addInterceptor(tokenInterceptor)
+            .addInterceptor(organizationInterceptor)
             .addInterceptor { chain ->
                 val request = chain.request()
                 Log.d("Cookies", "Sending cookies: ${request.headers["Cookie"]}")

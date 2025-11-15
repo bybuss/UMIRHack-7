@@ -149,6 +149,7 @@ private fun SoilAnalyzeScreen(
                                     onAction(SoilAnalyzeAction.ToggleZoneExpansion(zone.id))
                                 },
                                 onAction = onAction,
+                                validationErrors = zoneState.validationErrors,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
@@ -176,6 +177,7 @@ fun ExpandableZoneCard(
     submitError: String?,
     submitSuccess: Boolean,
     onToggleExpansion: () -> Unit,
+    validationErrors: Map<String, String>,
     onAction: (SoilAnalyzeAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -242,6 +244,7 @@ fun ExpandableZoneCard(
                         isSubmitting = isSubmitting,
                         submitError = submitError,
                         submitSuccess = submitSuccess,
+                        validationErrors = validationErrors,
                         onAction = onAction,
                         modifier = Modifier.fillMaxWidth()
                     )
