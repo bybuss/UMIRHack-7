@@ -109,16 +109,16 @@ private fun MapLibreScreen(
         if (state.showRegionSuggestion) {
             AlertDialog(
                 onDismissRequest = { onAction(MapLibreAction.DismissRegionSuggestion) },
-                title = { Text("Скачать оффлайн-карту?") },
+                title = { Text("Скачать оффлайн-карту?", color = CustomTheme.colors.black) },
                 text = {
-                    Text("Хотите скачать оффлайн-карту для региона ${state.suggestedRegionName}?")
+                    Text("Хотите скачать оффлайн-карту для региона ${state.suggestedRegionName}?", color = CustomTheme.colors.black)
                 },
                 confirmButton = {
                     Button(
                         onClick = { onAction(MapLibreAction.DownloadCurrentRegion) },
                         colors = ButtonDefaults.getColors()
                     ) {
-                        Text("Скачать")
+                        Text("Скачать", color = CustomTheme.colors.black)
                     }
                 },
                 dismissButton = {
@@ -126,7 +126,7 @@ private fun MapLibreScreen(
                         onClick = { onAction(MapLibreAction.DismissRegionSuggestion) },
                         colors = ButtonDefaults.getColors()
                     ) {
-                        Text("Не сейчас")
+                        Text("Не сейчас", color = CustomTheme.colors.black)
                     }
                 },
                 containerColor = CustomTheme.colors.white,

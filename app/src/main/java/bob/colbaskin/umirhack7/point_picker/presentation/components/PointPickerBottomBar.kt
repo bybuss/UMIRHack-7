@@ -36,7 +36,7 @@ fun PointPickerBottomBar(
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.getColors()
             ) {
-                Text("Назад")
+                Text("Назад", color = CustomTheme.colors.black)
             }
 
             Button(
