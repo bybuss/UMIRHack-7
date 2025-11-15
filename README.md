@@ -98,5 +98,5 @@
 
 <p align="center">Ссылка на текущую версию <a href="https://github.com/bybuss/WebAntPractice/releases/tag/v1.0.0">Releases</a></p>
 <p align="center"><a href="https://cloud.mail.ru/public/9WYF/vHQB3bsvE">Ссылка на скачивание apk</a></p>
-<p align="center"><a href="https://github.com/user-attachments/files/20852622/apk.zip">Прямая ссылка на установку .zip</a></p>
-<p align="center"><a href="https://github.com/bybuss/WebAntPractice/blob/main/app/release/app-release.apk">Прямая ссылка на установку .apk</a></p>
+<p align="center"><a href="https://github.com/bybuss/UMIRHack-7/archive/refs/tags/v1.0.0.zip">Прямая ссылка на установку .zip</a></p>
+<p align="center"><a href="https://github.com/bybuss/UMIRHack-7/releases/download/v1.0.0/app-release.apk">Прямая ссылка на установку .apk</a></p>
