@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -115,6 +116,19 @@ fun SplashScreen() {
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .offset(x = -logoXOffset)
+                .layout { measurable, constraints ->
+                    val scaleFactor = (logoSize.value * 2).coerceAtLeast(1f)
+                    val scaledConstraints = constraints.copy(
+                        minWidth = (constraints.minWidth * scaleFactor).toInt(),
+                        maxWidth = (constraints.maxWidth * scaleFactor).toInt(),
+                        minHeight = (constraints.minHeight * scaleFactor).toInt(),
+                        maxHeight = (constraints.maxHeight * scaleFactor).toInt()
+                    )
+                    val placeable = measurable.measure(scaledConstraints)
+                    layout(placeable.width, placeable.height) {
+                        placeable.place(0, 0)
+                    }
+                }
                 .scale(logoSize.value)
                 .rotate(-logoRotation)
         )
