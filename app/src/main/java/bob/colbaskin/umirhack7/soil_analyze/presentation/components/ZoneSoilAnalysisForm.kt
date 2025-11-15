@@ -25,6 +25,7 @@ fun ZoneSoilAnalysisForm(
     isSubmitting: Boolean,
     submitError: String?,
     submitSuccess: Boolean,
+    validationErrors: Map<String, String>, // Добавляем ошибки валидации
     onAction: (SoilAnalyzeAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -40,7 +41,6 @@ fun ZoneSoilAnalysisForm(
             )
         }
 
-        // TODO: Добавить валидацию полей
         AnalysisFieldWithHint(
             value = soilAnalysisData.N.toString(),
             onValueChange = { value ->
@@ -48,7 +48,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Содержание азота (N)",
-            hint = "Количество азота в почве в мг/кг",
+            hint = "Количество азота в почве в мг/кг (0-1000)",
+            isError = validationErrors.containsKey("N"),
+            errorMessage = validationErrors["N"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -59,7 +61,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Содержание фосфора (P)",
-            hint = "Количество фосфора в почве в мг/кг",
+            hint = "Количество фосфора в почве в мг/кг (0-500)",
+            isError = validationErrors.containsKey("P"),
+            errorMessage = validationErrors["P"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -70,7 +74,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Содержание калия (K)",
-            hint = "Количество калия в почве в мг/кг",
+            hint = "Количество калия в почве в мг/кг (0-2000)",
+            isError = validationErrors.containsKey("K"),
+            errorMessage = validationErrors["K"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -81,7 +87,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Температура почвы",
-            hint = "Температура почвы на глубине измерения в °C",
+            hint = "Температура почвы на глубине измерения в °C (-50 до 100)",
+            isError = validationErrors.containsKey("Temperature"),
+            errorMessage = validationErrors["Temperature"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -92,7 +100,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Влажность почвы",
-            hint = "Процентное содержание влаги в почве",
+            hint = "Процентное содержание влаги в почве (0-100%)",
+            isError = validationErrors.containsKey("Humidity"),
+            errorMessage = validationErrors["Humidity"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -104,6 +114,8 @@ fun ZoneSoilAnalysisForm(
             },
             label = "Уровень pH",
             hint = "Кислотность почвы по шкале pH (0-14)",
+            isError = validationErrors.containsKey("pH"),
+            errorMessage = validationErrors["pH"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -114,7 +126,9 @@ fun ZoneSoilAnalysisForm(
                 onAction(SoilAnalyzeAction.UpdateZoneSoilAnalysisData(zoneId, newData))
             },
             label = "Количество осадков",
-            hint = "Высота слоя воды (в миллиметрах), которая выпала бы на ровную поверхность, если бы она не испарялась, не просачивалась в почву и не стекала",
+            hint = "Высота слоя воды в мм (0-10000)",
+            isError = validationErrors.containsKey("RainFall"),
+            errorMessage = validationErrors["RainFall"],
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -140,6 +154,7 @@ fun ZoneSoilAnalysisForm(
             submitSuccess = submitSuccess,
             measurementPoint = measurementPoint,
             locationError = locationError,
+            validationErrors = validationErrors,
             onAction = { onAction(SoilAnalyzeAction.SubmitZoneAnalysis(zoneId)) },
             modifier = Modifier.fillMaxWidth()
         )
